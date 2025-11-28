@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
+import Svg, { Defs, LinearGradient, Stop, Path } from 'react-native-svg';
 
 const SignUpScreen = ({ navigation }) => {
   const [phone, setPhone] = useState('');
@@ -24,6 +25,44 @@ const SignUpScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#27ae60" />
+      
+      {/* Decorative Background */}
+      <View style={styles.backgroundContainer}>
+        <Svg height="100%" width="100%" viewBox="0 0 400 300" style={styles.svg}>
+          <Defs>
+            <LinearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor="#1a8a4f" stopOpacity="1" />
+              <Stop offset="100%" stopColor="#27ae60" stopOpacity="1" />
+            </LinearGradient>
+            <LinearGradient id="grad2" x1="100%" y1="0%" x2="0%" y2="100%">
+              <Stop offset="0%" stopColor="#27ae60" stopOpacity="1" />
+              <Stop offset="100%" stopColor="#2ecc71" stopOpacity="1" />
+            </LinearGradient>
+          </Defs>
+          
+          {/* Top Left Curve */}
+          <Path
+            d="M 0 0 Q 100 -50, 150 100 L 0 150 Z"
+            fill="url(#grad1)"
+            opacity="0.8"
+          />
+          
+          {/* Top Right Curve */}
+          <Path
+            d="M 400 0 Q 300 50, 250 150 L 400 200 Z"
+            fill="url(#grad2)"
+            opacity="0.7"
+          />
+          
+          {/* Bottom Left Curve */}
+          <Path
+            d="M 0 280 Q 80 250, 120 150 L 0 100 Z"
+            fill="url(#grad1)"
+            opacity="0.6"
+          />
+        </Svg>
+      </View>
+
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerText}>LocalToto</Text>
@@ -86,10 +125,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#27ae60',
   },
+  backgroundContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 300,
+    zIndex: 0,
+  },
+  svg: {
+    position: 'absolute',
+  },
   container: {
     flexGrow: 1,
     padding: 20,
     justifyContent: 'center',
+    zIndex: 1,
   },
   header: {
     marginBottom: 30,
@@ -206,6 +257,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-});
+})
 
 export default SignUpScreen;

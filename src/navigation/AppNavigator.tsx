@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SplashScreen from '../screens/SplashScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import LocationScreen from '../screens/LocationScreen';
-import SignUpScreen from '../../src/screens/Signupscreen'
+import SignUpScreen from '../screens/Signupscreen'
 import SignInScreen from '../screens/Signinscreen'
 import ProfileScreen from '../screens/Profilescreen'
 import PaymentMethodScreen from '../screens/PaymentMethodscreen'
@@ -20,7 +20,7 @@ const AppNavigator = () => {
     return (
         <NavigationContainer>
             <Stack.Navigator
-                initialRouteName="Splash"
+                initialRouteName="signup"
                 screenOptions={{
                     headerShown: false,
                 }}
