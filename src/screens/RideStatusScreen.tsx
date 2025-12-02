@@ -181,7 +181,7 @@ const RideStatusScreen = () => {
                         <View style={[
                             styles.progressLine,
                             rideStatus !== 'arriving' && styles.progressLineCompleted
-                        ]} />
+                        ]} /> 
 
                         <View style={styles.progressStep}>
                             <View style={[
