@@ -9,6 +9,9 @@ import SignInScreen from '../screens/Signinscreen'
 import ProfileScreen from '../screens/Profilescreen'
 import PaymentMethodScreen from '../screens/PaymentMethodscreen'
 import TripHistoryScreen from '../screens/TripHistoryScreen'
+import DriverFoundScreen from '../screens/DriverFoundScreen'
+import RideStatusScreen from '../screens/RideStatusScreen'
+import RatingScreen from '../screens/RatingScreen'
 
 
 const Stack = createNativeStackNavigator();
@@ -20,7 +23,7 @@ const AppNavigator = () => {
     return (
         <NavigationContainer>
             <Stack.Navigator
-                initialRouteName="signup"
+                initialRouteName="Rating"
                 screenOptions={{
                     headerShown: false,
                 }}
@@ -32,7 +35,10 @@ const AppNavigator = () => {
                 <Stack.Screen name="SignIn" component={SignInScreen} />
                 <Stack.Screen name="Profile" component={ProfileScreen} />
                 <Stack.Screen name="Payment" component={PaymentMethodScreen} />
-                          <Stack.Screen name="TripHistory" component={TripHistoryScreen} />
+                <Stack.Screen name="TripHistory" component={TripHistoryScreen} />
+                <Stack.Screen name="DriverFound" component={DriverFoundScreen} />
+                <Stack.Screen name="RideStatus" component={RideStatusScreen} />
+                <Stack.Screen name="Rating" component={RatingScreen} />
 
 
 

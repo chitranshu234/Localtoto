@@ -47,6 +47,9 @@ const slides = [
 type RootStackParamList = {
     Onboarding: undefined;
     Location: undefined;
+    DriverFound: undefined;
+    RideStatus: undefined;
+    Rating: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Onboarding'>;
