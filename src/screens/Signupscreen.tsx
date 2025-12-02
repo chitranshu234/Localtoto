@@ -9,8 +9,11 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
+  Dimensions,
+  Image,
 } from 'react-native';
-import Svg, { Defs, LinearGradient, Stop, Path } from 'react-native-svg';
+
+const { width } = Dimensions.get('window');
 
 const SignUpScreen = ({ navigation }) => {
   const [phone, setPhone] = useState('');
@@ -18,54 +21,30 @@ const SignUpScreen = ({ navigation }) => {
   const handleSendOTP = () => {
     if (phone.length === 10) {
       console.log('Sending OTP to:', phone);
-      navigation?.navigate('Profile', { phone });
+      navigation?.navigate('OTP', { phone });
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#27ae60" />
+      <StatusBar barStyle="light-content" backgroundColor="#219653" />
       
-      {/* Decorative Background */}
+      {/* Circle Background Effect - Same as Splash Screen */}
       <View style={styles.backgroundContainer}>
-        <Svg height="100%" width="100%" viewBox="0 0 400 300" style={styles.svg}>
-          <Defs>
-            <LinearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <Stop offset="0%" stopColor="#1a8a4f" stopOpacity="1" />
-              <Stop offset="100%" stopColor="#27ae60" stopOpacity="1" />
-            </LinearGradient>
-            <LinearGradient id="grad2" x1="100%" y1="0%" x2="0%" y2="100%">
-              <Stop offset="0%" stopColor="#27ae60" stopOpacity="1" />
-              <Stop offset="100%" stopColor="#2ecc71" stopOpacity="1" />
-            </LinearGradient>
-          </Defs>
-          
-          {/* Top Left Curve */}
-          <Path
-            d="M 0 0 Q 100 -50, 150 100 L 0 150 Z"
-            fill="url(#grad1)"
-            opacity="0.8"
-          />
-          
-          {/* Top Right Curve */}
-          <Path
-            d="M 400 0 Q 300 50, 250 150 L 400 200 Z"
-            fill="url(#grad2)"
-            opacity="0.7"
-          />
-          
-          {/* Bottom Left Curve */}
-          <Path
-            d="M 0 280 Q 80 250, 120 150 L 0 100 Z"
-            fill="url(#grad1)"
-            opacity="0.6"
-          />
-        </Svg>
+        {/* Top Left Circle - Darker Green */}
+        <View style={styles.circle1} />
+        
+        {/* Bottom Right Circle - Lighter Green */}
+        <View style={styles.circle2} />
       </View>
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerText}>LocalToto</Text>
+          <Image
+            source={require('../assets/logo_white.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
         <View style={styles.card}>
@@ -109,11 +88,11 @@ const SignUpScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.socialContainer}>
+          {/* <View style={styles.socialContainer}>
             <TouchableOpacity style={styles.facebookBtn}>
               <Text style={styles.socialBtnText}>f Facebook</Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -123,18 +102,36 @@ const SignUpScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#27ae60',
+    backgroundColor: '#219653', // Main Green - matching splash screen
   },
   backgroundContainer: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 300,
+    bottom: 0,
+    overflow: 'hidden',
     zIndex: 0,
   },
-  svg: {
+  // Circle background styles matching splash screen
+  circle1: {
     position: 'absolute',
+    top: -width * 0.2,
+    left: -width * 0.2,
+    width: width * 0.8,
+    height: width * 0.8,
+    borderRadius: (width * 0.8) / 2,
+    backgroundColor: '#197A42', // Darker Green
+  },
+  circle2: {
+    position: 'absolute',
+    bottom: -width * 0.2,
+    right: -width * 0.2,
+    width: width * 0.9,
+    height: width * 0.9,
+    borderRadius: (width * 0.9) / 2,
+    backgroundColor: '#27AE60', // Lighter Green
+    opacity: 0.6,
   },
   container: {
     flexGrow: 1,
@@ -145,10 +142,10 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 30,
   },
-  headerText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: 'white',
+  logo: {
+    width: 200,
+    height: 60,
+    alignSelf: 'flex-start',
   },
   card: {
     backgroundColor: 'white',
@@ -159,6 +156,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 5,
+    marginVertical:-20
   },
   titleContainer: {
     marginBottom: 25,
@@ -257,6 +255,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-})
+});
 
 export default SignUpScreen;
