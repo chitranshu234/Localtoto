@@ -59,10 +59,15 @@ const DriverFoundScreen = () => {
                     <Text style={styles.title}>
                         Driver <Text style={styles.highlight}>Found!</Text>
                     </Text>
-                    <Text style={styles.subtitle}>
-                        Your driver is on the way.{'\n'}
-                        Please be ready at the pickup point.
-                    </Text>
+                    <View>
+                        <Text style={styles.subtitle}>
+                        Your driver is on the way.
+                  </Text>
+                  
+                    </View>
+                    
+                  
+                    
                 </View>
 
                 <View style={styles.driverInfoContainer}>
