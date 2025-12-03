@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
 interface ButtonProps {
-    title: string;
+    title: string | React.ReactNode;
     onPress: () => void;
     variant?: 'primary' | 'secondary';
     style?: ViewStyle;
@@ -18,14 +18,18 @@ const Button: React.FC<ButtonProps> = ({ title, onPress, variant = 'primary', st
             ]}
             onPress={onPress}
         >
-            <Text
-                style={[
-                    styles.text,
-                    variant === 'secondary' ? styles.secondaryText : styles.primaryText,
-                ]}
-            >
-                {title}
-            </Text>
+            {typeof title === 'string' ? (
+                <Text
+                    style={[
+                        styles.text,
+                        variant === 'secondary' ? styles.secondaryText : styles.primaryText,
+                    ]}
+                >
+                    {title}
+                </Text>
+            ) : (
+                title
+            )}
         </TouchableOpacity>
     );
 };

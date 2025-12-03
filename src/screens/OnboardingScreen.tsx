@@ -17,6 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Pagination from '../components/Pagination';
 import Button from '../components/Button';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 const { width, height } = Dimensions.get('window');
 
@@ -47,6 +48,11 @@ const slides = [
 type RootStackParamList = {
     Onboarding: undefined;
     Location: undefined;
+    Search: undefined;
+    Confirm: undefined;
+    OTP: undefined;
+    FindingDriver: undefined;
+    Profile: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Onboarding'>;
@@ -123,6 +129,81 @@ const OnboardingScreen = () => {
                             }}
                             variant="secondary"
                             style={styles.secondaryBtn}
+                        />
+                    </View>
+
+                    {/* Temporary Debug Buttons */}
+                    <View style={{
+                        position: 'absolute',
+                        top: 60,
+                        right: 10,
+                        flexDirection: 'column',
+                        zIndex: 9999,
+                        elevation: 10
+                    }}>
+                        <Button
+                            title={<Icon name="search" size={20} color="#FFF" />}
+                            onPress={() => navigation.navigate('Search')}
+                            style={{
+                                backgroundColor: '#F59E0B',
+                                width: 50,
+                                height: 50,
+                                paddingHorizontal: 0,
+                                paddingVertical: 0,
+                                borderRadius: 25,
+                                marginBottom: 10
+                            }}
+                        />
+                        <Button
+                            title={<Icon name="check" size={20} color="#FFF" />}
+                            onPress={() => navigation.navigate('Confirm')}
+                            style={{
+                                backgroundColor: '#F59E0B',
+                                width: 50,
+                                height: 50,
+                                paddingHorizontal: 0,
+                                paddingVertical: 0,
+                                borderRadius: 25,
+                                marginBottom: 10
+                            }}
+                        />
+                        <Button
+                            title={<Icon name="lock" size={20} color="#FFF" />}
+                            onPress={() => navigation.navigate('OTP')}
+                            style={{
+                                backgroundColor: '#F59E0B',
+                                width: 50,
+                                height: 50,
+                                paddingHorizontal: 0,
+                                paddingVertical: 0,
+                                borderRadius: 25,
+                                marginBottom: 10
+                            }}
+                        />
+                        <Button
+                            title={<Icon name="car" size={20} color="#FFF" />}
+                            onPress={() => navigation.navigate('FindingDriver')}
+                            style={{
+                                backgroundColor: '#F59E0B',
+                                width: 50,
+                                height: 50,
+                                paddingHorizontal: 0,
+                                paddingVertical: 0,
+                                borderRadius: 25,
+                                marginBottom: 10
+                            }}
+                        />
+                        <Button
+                            title={<Icon name="user" size={20} color="#FFF" />}
+                            onPress={() => navigation.navigate('Profile')}
+                            style={{
+                                backgroundColor: '#F59E0B',
+                                width: 50,
+                                height: 50,
+                                paddingHorizontal: 0,
+                                paddingVertical: 0,
+                                borderRadius: 25
+                            }}
                         />
                     </View>
                 </View>
