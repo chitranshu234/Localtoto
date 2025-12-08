@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import LocationService from '../services/LocationService';
 const { width } = Dimensions.get('window');
 const MOCK_RESULTS = [
     { id: '1', title: 'Central Mall', address: '123 Main St, City Center' },
@@ -28,6 +29,19 @@ const SearchScreen = ({ navigation, route }: any) => {
     const [pickupQuery, setPickupQuery] = useState('');
     const [dropQuery, setDropQuery] = useState('');
     const [activeInput, setActiveInput] = useState(route?.params?.type || 'drop');
+    // Check location permission when screen loads (Ola/Uber style)
+    useEffect(() => {
+        checkLocationPermission();
+    }, []);
+    const checkLocationPermission = async () => {
+        const hasPermission = await LocationService.checkPermission();
+        if (!hasPermission) {
+            const granted = await LocationService.requestPermission();
+            if (!granted) {
+                LocationService.showPermissionDeniedAlert();
+            }
+        }
+    };
     const renderResultItem = ({ item }: { item: typeof MOCK_RESULTS[0] }) => (
         <TouchableOpacity
             style={styles.resultItem}

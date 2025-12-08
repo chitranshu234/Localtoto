@@ -9,15 +9,12 @@ import {
     NativeSyntheticEvent,
     NativeScrollEvent,
     SafeAreaView,
-    PermissionsAndroid,
-    Platform,
-    ToastAndroid,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Pagination from '../components/Pagination';
 import Button from '../components/Button';
-import Icon from 'react-native-vector-icons/FontAwesome';
 
 const { width, height } = Dimensions.get('window');
 
@@ -67,32 +64,13 @@ const OnboardingScreen = () => {
         setCurrentIndex(index);
     };
 
-    const requestLocationPermission = async () => {
-        if (Platform.OS === 'android') {
-            try {
-                const granted = await PermissionsAndroid.request(
-                    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-                    {
-                        title: 'Location Permission',
-                        message:
-                            'Local Toto needs access to your location ' +
-                            'to find drivers around you.',
-                        buttonNeutral: 'Ask Me Later',
-                        buttonNegative: 'Cancel',
-                        buttonPositive: 'OK',
-                    },
-                );
-                if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-                    console.log('You can use the location');
-                    ToastAndroid.show('Location permission granted', ToastAndroid.SHORT);
-                    // Here you could navigate to main app or proceed
-                } else {
-                    console.log('Location permission denied');
-                    ToastAndroid.show('Location permission denied', ToastAndroid.SHORT);
-                }
-            } catch (err) {
-                console.warn(err);
-            }
+    const handleOnboardingComplete = async () => {
+        try {
+            await AsyncStorage.setItem('@localtoto_onboarding_completed', 'true');
+            navigation.navigate('Search');
+        } catch (error) {
+            console.error('Error saving onboarding status:', error);
+            navigation.navigate('Search');
         }
     };
 
@@ -118,92 +96,15 @@ const OnboardingScreen = () => {
                     <View style={styles.buttonContainer}>
                         <Button
                             title="Use current location"
-                            onPress={requestLocationPermission}
+                            onPress={handleOnboardingComplete}
                             variant="primary"
                             style={styles.primaryBtn}
                         />
                         <Button
                             title="Select it manually"
-                            onPress={() => {
-                                console.log('Select manually');
-                            }}
+                            onPress={handleOnboardingComplete}
                             variant="secondary"
                             style={styles.secondaryBtn}
-                        />
-                    </View>
-
-                    {/* Temporary Debug Buttons */}
-                    <View style={{
-                        position: 'absolute',
-                        top: 60,
-                        right: 10,
-                        flexDirection: 'column',
-                        zIndex: 9999,
-                        elevation: 10
-                    }}>
-                        <Button
-                            title={<Icon name="search" size={20} color="#FFF" />}
-                            onPress={() => navigation.navigate('Search')}
-                            style={{
-                                backgroundColor: '#F59E0B',
-                                width: 50,
-                                height: 50,
-                                paddingHorizontal: 0,
-                                paddingVertical: 0,
-                                borderRadius: 25,
-                                marginBottom: 10
-                            }}
-                        />
-                        <Button
-                            title={<Icon name="check" size={20} color="#FFF" />}
-                            onPress={() => navigation.navigate('Confirm')}
-                            style={{
-                                backgroundColor: '#F59E0B',
-                                width: 50,
-                                height: 50,
-                                paddingHorizontal: 0,
-                                paddingVertical: 0,
-                                borderRadius: 25,
-                                marginBottom: 10
-                            }}
-                        />
-                        <Button
-                            title={<Icon name="lock" size={20} color="#FFF" />}
-                            onPress={() => navigation.navigate('OTP')}
-                            style={{
-                                backgroundColor: '#F59E0B',
-                                width: 50,
-                                height: 50,
-                                paddingHorizontal: 0,
-                                paddingVertical: 0,
-                                borderRadius: 25,
-                                marginBottom: 10
-                            }}
-                        />
-                        <Button
-                            title={<Icon name="car" size={20} color="#FFF" />}
-                            onPress={() => navigation.navigate('FindingDriver')}
-                            style={{
-                                backgroundColor: '#F59E0B',
-                                width: 50,
-                                height: 50,
-                                paddingHorizontal: 0,
-                                paddingVertical: 0,
-                                borderRadius: 25,
-                                marginBottom: 10
-                            }}
-                        />
-                        <Button
-                            title={<Icon name="user" size={20} color="#FFF" />}
-                            onPress={() => navigation.navigate('Profile')}
-                            style={{
-                                backgroundColor: '#F59E0B',
-                                width: 50,
-                                height: 50,
-                                paddingHorizontal: 0,
-                                paddingVertical: 0,
-                                borderRadius: 25
-                            }}
                         />
                     </View>
                 </View>
