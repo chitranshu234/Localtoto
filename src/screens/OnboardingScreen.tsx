@@ -9,12 +9,10 @@ import {
     NativeSyntheticEvent,
     NativeScrollEvent,
     SafeAreaView,
-    PermissionsAndroid,
-    Platform,
-    ToastAndroid,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Pagination from '../components/Pagination';
 import Button from '../components/Button';
 
@@ -47,9 +45,11 @@ const slides = [
 type RootStackParamList = {
     Onboarding: undefined;
     Location: undefined;
-    DriverFound: undefined;
-    RideStatus: undefined;
-    Rating: undefined;
+    Search: undefined;
+    Confirm: undefined;
+    OTP: undefined;
+    FindingDriver: undefined;
+    Profile: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Onboarding'>;
@@ -64,32 +64,13 @@ const OnboardingScreen = () => {
         setCurrentIndex(index);
     };
 
-    const requestLocationPermission = async () => {
-        if (Platform.OS === 'android') {
-            try {
-                const granted = await PermissionsAndroid.request(
-                    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-                    {
-                        title: 'Location Permission',
-                        message:
-                            'Local Toto needs access to your location ' +
-                            'to find drivers around you.',
-                        buttonNeutral: 'Ask Me Later',
-                        buttonNegative: 'Cancel',
-                        buttonPositive: 'OK',
-                    },
-                );
-                if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-                    console.log('You can use the location');
-                    ToastAndroid.show('Location permission granted', ToastAndroid.SHORT);
-                    // Here you could navigate to main app or proceed
-                } else {
-                    console.log('Location permission denied');
-                    ToastAndroid.show('Location permission denied', ToastAndroid.SHORT);
-                }
-            } catch (err) {
-                console.warn(err);
-            }
+    const handleOnboardingComplete = async () => {
+        try {
+            await AsyncStorage.setItem('@localtoto_onboarding_completed', 'true');
+            navigation.navigate('Search');
+        } catch (error) {
+            console.error('Error saving onboarding status:', error);
+            navigation.navigate('Search');
         }
     };
 
@@ -115,15 +96,13 @@ const OnboardingScreen = () => {
                     <View style={styles.buttonContainer}>
                         <Button
                             title="Use current location"
-                            onPress={requestLocationPermission}
+                            onPress={handleOnboardingComplete}
                             variant="primary"
                             style={styles.primaryBtn}
                         />
                         <Button
                             title="Select it manually"
-                            onPress={() => {
-                                console.log('Select manually');
-                            }}
+                            onPress={handleOnboardingComplete}
                             variant="secondary"
                             style={styles.secondaryBtn}
                         />
