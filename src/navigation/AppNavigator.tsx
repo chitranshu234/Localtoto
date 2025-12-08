@@ -5,6 +5,21 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from '../screens/SplashScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import LocationScreen from '../screens/LocationScreen';
+import SignUpScreen from '../screens/Signupscreen'
+import SignInScreen from '../screens/Signinscreen'
+import OTPScreen from '../screens/OTPScreen'
+import ProfileScreen from '../screens/Profilescreen'
+import PaymentMethodScreen from '../screens/PaymentMethodscreen'
+import TripHistoryScreen from '../screens/TripHistoryScreen'
+import DriverFoundScreen from '../screens/DriverFoundScreen'
+import RideStatusScreen from '../screens/RideStatusScreen'
+import RatingScreen from '../screens/RatingScreen'
+
+
+const Stack = createNativeStackNavigator();
+
+
+
 import SearchScreen from '../screens/SearchScreen';
 import ConfirmScreen from '../screens/ConfirmScreen';
 import OTPScreen from '../screens/OTPScreen';
@@ -47,6 +62,7 @@ const AppNavigator = () => {
     return (
         <NavigationContainer>
             <Stack.Navigator
+                initialRouteName="signup"
                 initialRouteName={isOnboardingCompleted ? 'Search' : 'Onboarding'}
                 screenOptions={{
                     headerShown: false,
@@ -55,6 +71,21 @@ const AppNavigator = () => {
                 <Stack.Screen name="Splash" component={SplashScreen} />
                 <Stack.Screen name="Onboarding" component={OnboardingScreen} />
                 <Stack.Screen name="Location" component={LocationScreen} />
+                <Stack.Screen name="signup" component={SignUpScreen} />
+                <Stack.Screen name="SignIn" component={SignInScreen} />
+                <Stack.Screen name="OTP" component={OTPScreen} />
+                <Stack.Screen name="Profile" component={ProfileScreen} />
+                <Stack.Screen name="Payment" component={PaymentMethodScreen} />
+                <Stack.Screen name="TripHistory" component={TripHistoryScreen} />
+                <Stack.Screen name="DriverFound" component={DriverFoundScreen} />
+                <Stack.Screen name="RideStatus" component={RideStatusScreen} />
+                <Stack.Screen name="Rating" component={RatingScreen} />
+
+
+
+
+
+
                 <Stack.Screen name="Search" component={SearchScreen} />
                 <Stack.Screen name="Confirm" component={ConfirmScreen} />
                 <Stack.Screen name="OTP" component={OTPScreen} />
