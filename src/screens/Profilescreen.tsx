@@ -38,7 +38,7 @@ const ProfileScreen = ({ route, navigation }) => {
         
         {/* Bottom Right Circle - Lighter Green */}
         <View style={styles.circle2} />
-      </View>
+      </View> 
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
