@@ -78,6 +78,7 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace "com.localtoto"
+ 
     defaultConfig {
         applicationId "com.localtoto"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -117,3 +118,7 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+
+apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
+
