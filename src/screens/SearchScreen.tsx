@@ -64,6 +64,7 @@ const SearchScreen = ({ navigation, route }: any) => {
     };
 
     const goToMap = (type: 'pickup' | 'drop', location?: any) => {
+        // Navigate to signup screen to collect phone number before showing map
         navigation.navigate('signup', {
             type,
             initialLocation: location || null,

@@ -17,12 +17,12 @@ import {
   Modal,
   Keyboard
 } from 'react-native';
-import Mapbox, { 
-  Camera, 
-  PointAnnotation, 
-  ShapeSource, 
-  CircleLayer, 
-  LineLayer 
+import Mapbox, {
+  Camera,
+  PointAnnotation,
+  ShapeSource,
+  CircleLayer,
+  LineLayer
 } from '@rnmapbox/maps';
 import Geolocation from 'react-native-geolocation-service';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -37,20 +37,20 @@ const { width, height } = Dimensions.get('window');
 const MAP_HEIGHT = height * 0.42;
 
 // Memoized components
-const DriverItem = React.memo(({ driver, isSelected, onSelectDriver }) => (
-  <TouchableOpacity 
+const DriverItem = React.memo(({ driver, isSelected, onSelectDriver }: any) => (
+  <TouchableOpacity
     style={[styles.driverItem, isSelected && styles.selectedDriverItem]}
     onPress={() => onSelectDriver(driver)}
   >
     <View style={styles.driverIconContainer}>
-      <FontAwesome 
-        name="car" 
-        size={28} 
-        color={driver.vehicleType === 'suv' ? '#2196F3' : 
-               driver.vehicleType === 'sedan' ? '#4CAF50' : '#FF9800'} 
+      <FontAwesome
+        name="car"
+        size={28}
+        color={driver.vehicleType === 'suv' ? '#2196F3' :
+          driver.vehicleType === 'sedan' ? '#4CAF50' : '#FF9800'}
       />
     </View>
-    
+
     <View style={styles.driverInfo}>
       <View style={styles.driverHeader}>
         <Text style={styles.driverName}>{driver.name}</Text>
@@ -59,7 +59,7 @@ const DriverItem = React.memo(({ driver, isSelected, onSelectDriver }) => (
           <Text style={styles.ratingText}>{driver.rating}</Text>
         </View>
       </View>
-      
+
       <View style={styles.vehicleDetails}>
         <Text style={styles.vehicleText}>{driver.vehicle}</Text>
         <View style={styles.vehicleTags}>
@@ -67,7 +67,7 @@ const DriverItem = React.memo(({ driver, isSelected, onSelectDriver }) => (
           <Text style={styles.vehicleTag}>{driver.availableSeats} seats</Text>
         </View>
       </View>
-      
+
       <View style={styles.driverFooter}>
         <View style={styles.etaContainer}>
           <Ionicons name="time-outline" size={14} color="#666" />
@@ -76,7 +76,7 @@ const DriverItem = React.memo(({ driver, isSelected, onSelectDriver }) => (
         <Text style={styles.distanceText}>{driver.distance}</Text>
       </View>
     </View>
-    
+
     <View style={styles.driverPrice}>
       <Text style={styles.priceText}>₹{driver.pricePerKm}/km</Text>
       <Text style={styles.priceRange}>{driver.priceRange}</Text>
@@ -84,7 +84,7 @@ const DriverItem = React.memo(({ driver, isSelected, onSelectDriver }) => (
   </TouchableOpacity>
 ));
 
-const RecentTripItem = React.memo(({ trip }) => (
+const RecentTripItem = React.memo(({ trip }: any) => (
   <View style={styles.recentTripItem}>
     <View style={styles.recentTripIcon}>
       <Ionicons name="car" size={20} color="#4CAF50" />
@@ -120,30 +120,30 @@ const MapboxLocationScreen2 = () => {
     longitude: 82.9739,
     address: 'Current Location'
   });
-  const [destination, setDestination] = useState(null);
-  const [nearbyDrivers, setNearbyDrivers] = useState([]);
-  const [selectedDriver, setSelectedDriver] = useState(null);
+  const [destination, setDestination] = useState<any>(null);
+  const [nearbyDrivers, setNearbyDrivers] = useState<any[]>([]);
+  const [selectedDriver, setSelectedDriver] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
-  const [routeCoordinates, setRouteCoordinates] = useState([]);
+  const [routeCoordinates, setRouteCoordinates] = useState<any[]>([]);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
-  const [rideInfo, setRideInfo] = useState(null);
-  const [rideFare, setRideFare] = useState(null);
+  const [rideInfo, setRideInfo] = useState<any>(null);
+  const [rideFare, setRideFare] = useState<any>(null);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState('cash');
   const [showPickupCard, setShowPickupCard] = useState(true);
   const [searchMode, setSearchMode] = useState('destination'); // 'pickup' or 'destination'
-  const [movingDriverPosition, setMovingDriverPosition] = useState(null);
+  const [movingDriverPosition, setMovingDriverPosition] = useState<any>(null);
   const [isDriverMoving, setIsDriverMoving] = useState(false);
   const [cameraAdjusted, setCameraAdjusted] = useState(false);
   const [showDriversOnMap, setShowDriversOnMap] = useState(true);
   const [modalSearchQuery, setModalSearchQuery] = useState('');
-  const [modalSearchResults, setModalSearchResults] = useState([]);
+  const [modalSearchResults, setModalSearchResults] = useState<any[]>([]);
   const [modalIsSearching, setModalIsSearching] = useState(false);
-  
+
   // Recent Trips Data
   const [recentTrips, setRecentTrips] = useState([
     {
@@ -180,7 +180,7 @@ const MapboxLocationScreen2 = () => {
       status: 'completed'
     }
   ]);
-  
+
   // Previous Destinations
   const [previousDestinations, setPreviousDestinations] = useState([
     {
@@ -205,17 +205,16 @@ const MapboxLocationScreen2 = () => {
       type: 'tourist_attraction'
     }
   ]);
-  
+
   // Refs
-  const cameraRef = useRef();
-  const mapRef = useRef();
-  const bottomSheetModalRef = useRef(null);
-  const searchInputRef = useRef(null);
-  const animationIntervalRef = useRef(null);
-  const modalSearchTimeoutRef = useRef(null);
-  const searchTextRef = useRef('');
-  const modalTextRef = useRef('');
-  
+  const cameraRef = useRef<any>(null);
+  const mapRef = useRef<any>(null);
+  const bottomSheetModalRef = useRef<any>(null);
+  const searchInputRef = useRef<any>(null);
+  const animationIntervalRef = useRef<any>(null);
+  const modalSearchTimeoutRef = useRef<any>(null);
+  const searchTextRef = useRef<any>('');
+  const modalTextRef = useRef<any>('');
   const snapPoints = useMemo(() => ['58%', '70%', '90%'], []);
 
   // Initialize
@@ -261,7 +260,7 @@ const MapboxLocationScreen2 = () => {
     if (bookingConfirmed && selectedDriver && !isDriverMoving) {
       startDriverAnimation();
     }
-    
+
     return () => {
       if (animationIntervalRef.current) {
         clearInterval(animationIntervalRef.current);
@@ -309,47 +308,47 @@ const MapboxLocationScreen2 = () => {
 
   const getCurrentLocation = () => {
     setLoading(true);
-    
+
     Geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        
+
         const address = await reverseGeocode(latitude, longitude);
-        
+
         setCurrentLocation({
           latitude,
           longitude,
           address: address || 'Your current location'
         });
-        
+
         setPickupLocation({
           latitude,
           longitude,
           address: address || 'Current Location'
         });
-        
+
         // Generate mock drivers immediately on initial load
         generateMockDrivers(latitude, longitude);
-        
+
         setLoading(false);
       },
       (error) => {
         console.log('Error getting location:', error);
         setLoading(false);
         Alert.alert('Error', 'Unable to get your current location');
-        
+
         // Still generate mock drivers even if location fails (for demo)
         generateMockDrivers(25.3176, 82.9739);
       },
-      { 
-        enableHighAccuracy: true, 
-        timeout: 15000, 
-        maximumAge: 10000 
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 10000
       }
     );
   };
 
-  const reverseGeocode = async (lat, lng) => {
+  const reverseGeocode = async (lat: any, lng: any) => {
     try {
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_ACCESS_TOKEN}`
@@ -365,7 +364,7 @@ const MapboxLocationScreen2 = () => {
     }
   };
 
-  const generateMockDrivers = (lat, lng) => {
+  const generateMockDrivers = (lat: any, lng: any) => {
     const mockDrivers = [
       {
         id: '1',
@@ -432,18 +431,18 @@ const MapboxLocationScreen2 = () => {
         driverImage: 'https://randomuser.me/api/portraits/men/23.jpg'
       }
     ];
-    
+
     setNearbyDrivers(mockDrivers);
   };
 
-  const handleModalSearch = useCallback(async (query) => {
+  const handleModalSearch = useCallback(async (query: any) => {
     if (!query.trim()) {
       setModalSearchResults([]);
       return;
     }
-    
+
     setModalIsSearching(true);
-    
+
     try {
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?` +
@@ -451,9 +450,9 @@ const MapboxLocationScreen2 = () => {
         `access_token=${MAPBOX_ACCESS_TOKEN}&limit=8`
       );
       const data = await response.json();
-      
+
       if (data.features) {
-        const results = data.features.map(feature => ({
+        const results = data.features.map((feature: any) => ({
           id: feature.id,
           name: feature.text,
           address: feature.place_name,
@@ -492,7 +491,7 @@ const MapboxLocationScreen2 = () => {
     }
   }, [currentLocation]);
 
-  const handleSelectLocation = useCallback(async (location) => {
+  const handleSelectLocation = useCallback(async (location: any) => {
     if (searchMode === 'pickup') {
       // Update pickup location
       const newPickup = {
@@ -500,14 +499,14 @@ const MapboxLocationScreen2 = () => {
         longitude: location.coordinates[0],
         address: location.address
       };
-      
+
       setPickupLocation(newPickup);
-      
+
       // If destination exists, recalculate route
       if (destination) {
         await calculateRoute(destination.coordinates);
       }
-      
+
       // Show success feedback
       Alert.alert(
         'Pickup Updated',
@@ -521,10 +520,10 @@ const MapboxLocationScreen2 = () => {
         address: location.address,
         coordinates: location.coordinates
       };
-      
+
       setDestination(newDestination);
       setCameraAdjusted(false); // Reset camera adjustment flag
-      
+
       // Add to previous destinations
       if (!previousDestinations.some(dest => dest.name === location.name)) {
         setPreviousDestinations(prev => [
@@ -532,11 +531,11 @@ const MapboxLocationScreen2 = () => {
           ...prev.slice(0, 4)
         ]);
       }
-      
+
       // Calculate route
       await calculateRoute(newDestination.coordinates);
     }
-    
+
     // Close modal and reset search
     setShowSearchModal(false);
     setModalSearchQuery('');
@@ -544,9 +543,9 @@ const MapboxLocationScreen2 = () => {
     setShowPickupCard(false);
   }, [searchMode, destination, previousDestinations]);
 
-  const calculateRoute = useCallback(async (destCoords) => {
+  const calculateRoute = useCallback(async (destCoords: any) => {
     if (!pickupLocation) return;
-    
+
     try {
       const response = await fetch(
         `https://api.mapbox.com/directions/v5/mapbox/driving/` +
@@ -555,16 +554,16 @@ const MapboxLocationScreen2 = () => {
         `geometries=geojson&access_token=${MAPBOX_ACCESS_TOKEN}`
       );
       const data = await response.json();
-      
+
       if (data.routes && data.routes.length > 0) {
         const route = data.routes[0];
         setRouteCoordinates(route.geometry.coordinates);
-        
+
         const distanceInKm = route.distance / 1000;
         const baseFare = 50;
         const perKmRate = 12;
         const estimatedFare = Math.round(baseFare + (distanceInKm * perKmRate));
-        
+
         setRideFare({
           base: baseFare,
           distance: distanceInKm.toFixed(1),
@@ -581,10 +580,10 @@ const MapboxLocationScreen2 = () => {
         [destCoords[0], destCoords[1]]
       ];
       setRouteCoordinates(mockRoute);
-      
+
       const distance = 8.5;
       const estimatedFare = Math.round(50 + (distance * 12));
-      
+
       setRideFare({
         base: 50,
         distance: distance.toFixed(1),
@@ -597,23 +596,23 @@ const MapboxLocationScreen2 = () => {
 
   const adjustMapCameraToShowBothPoints = useCallback(() => {
     if (!pickupLocation || !destination || cameraAdjusted) return;
-    
+
     // Calculate center point between pickup and destination
     const centerLongitude = (pickupLocation.longitude + destination.coordinates[0]) / 2;
     const centerLatitude = (pickupLocation.latitude + destination.coordinates[1]) / 2;
-    
+
     // Calculate approximate distance between points to set zoom level
     const latDiff = Math.abs(pickupLocation.latitude - destination.coordinates[1]);
     const lngDiff = Math.abs(pickupLocation.longitude - destination.coordinates[0]);
     const maxDiff = Math.max(latDiff, lngDiff);
-    
+
     // Adjust zoom level based on distance
     let zoomLevel = 14;
     if (maxDiff > 0.1) zoomLevel = 12;
     if (maxDiff > 0.2) zoomLevel = 11;
     if (maxDiff > 0.3) zoomLevel = 10;
     if (maxDiff < 0.01) zoomLevel = 15;
-    
+
     if (cameraRef.current) {
       cameraRef.current.setCamera({
         centerCoordinate: [centerLongitude, centerLatitude],
@@ -622,40 +621,40 @@ const MapboxLocationScreen2 = () => {
         animationDuration: 1000
       });
     }
-    
+
     setCameraAdjusted(true);
   }, [pickupLocation, destination, cameraAdjusted]);
 
   const startDriverAnimation = useCallback(() => {
     if (!selectedDriver || !pickupLocation || isDriverMoving) return;
-    
+
     // Clear any existing animation
     if (animationIntervalRef.current) {
       clearInterval(animationIntervalRef.current);
     }
-    
+
     // Start driver at their original position
     setMovingDriverPosition(selectedDriver.coordinates);
     setIsDriverMoving(true);
-    
+
     // Generate animation path (10 seconds = 10000ms)
     const startLat = selectedDriver.coordinates[1];
     const startLng = selectedDriver.coordinates[0];
     const endLat = pickupLocation.latitude;
     const endLng = pickupLocation.longitude;
-    
+
     const totalSteps = 100; // 100 steps over 10 seconds = 100ms per step
     let currentStep = 0;
-    
+
     animationIntervalRef.current = setInterval(() => {
       currentStep++;
-      
+
       if (currentStep >= totalSteps) {
         // Animation complete
         clearInterval(animationIntervalRef.current);
         setIsDriverMoving(false);
         setMovingDriverPosition([endLng, endLat]);
-        
+
         // Show driver arrived message
         setTimeout(() => {
           Alert.alert(
@@ -664,19 +663,19 @@ const MapboxLocationScreen2 = () => {
             [{ text: 'OK' }]
           );
         }, 500);
-        
+
         return;
       }
-      
+
       const progress = currentStep / totalSteps;
       const lat = startLat + (endLat - startLat) * progress;
       const lng = startLng + (endLng - startLng) * progress;
-      
+
       setMovingDriverPosition([lng, lat]);
     }, 100); // Update every 100ms for 10 seconds total
   }, [selectedDriver, pickupLocation, isDriverMoving]);
 
-  const handleSelectDriver = useCallback((driver) => {
+  const handleSelectDriver = useCallback((driver: any) => {
     setSelectedDriver(driver);
   }, []);
 
@@ -693,17 +692,17 @@ const MapboxLocationScreen2 = () => {
       fare: rideFare,
       paymentMethod: selectedPayment,
       bookingTime: new Date().toLocaleTimeString(),
-      bookingDate: new Date().toLocaleDateString('en-IN', { 
-        weekday: 'long', 
-        month: 'short', 
-        day: 'numeric' 
+      bookingDate: new Date().toLocaleDateString('en-IN', {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric'
       }),
       rideId: `RIDE${Date.now().toString().slice(-6)}`
     };
 
     setRideInfo(rideDetails);
     setBookingConfirmed(true);
-    
+
     // Add to recent trips
     const newTrip = {
       id: Date.now().toString(),
@@ -716,9 +715,9 @@ const MapboxLocationScreen2 = () => {
       rating: selectedDriver.rating,
       status: 'upcoming'
     };
-    
+
     setRecentTrips(prev => [newTrip, ...prev]);
-    
+
     Alert.alert(
       'Ride Booked!',
       `Your ride with ${selectedDriver.name} has been confirmed.\nRide ID: ${rideDetails.rideId}\nEstimated Fare: ₹${rideFare.total}`,
@@ -782,7 +781,7 @@ const MapboxLocationScreen2 = () => {
   const renderDriverMarkers = useMemo(() => {
     // Show drivers on map at all times (when no destination or when destination but no driver selected)
     if (!showDriversOnMap || selectedDriver || bookingConfirmed) return null;
-    
+
     return nearbyDrivers.map(driver => (
       <PointAnnotation
         key={driver.id}
@@ -802,7 +801,7 @@ const MapboxLocationScreen2 = () => {
 
   const renderMovingDriverMarker = useMemo(() => {
     if (!bookingConfirmed || !selectedDriver || !movingDriverPosition) return null;
-    
+
     return (
       <PointAnnotation
         id="movingDriver"
@@ -819,12 +818,13 @@ const MapboxLocationScreen2 = () => {
 
   const renderRoute = useMemo(() => {
     if (routeCoordinates.length < 2) return null;
-    
+
     return (
       <ShapeSource
         id="routeSource"
         shape={{
           type: 'Feature',
+          properties: {},
           geometry: {
             type: 'LineString',
             coordinates: routeCoordinates
@@ -847,15 +847,15 @@ const MapboxLocationScreen2 = () => {
 
   // Fixed Search Modal Component
   const SearchModal = React.memo(() => {
-    const handleModalTextChange = useCallback((text) => {
+    const handleModalTextChange = useCallback((text: any) => {
       modalTextRef.current = text;
       setModalSearchQuery(text);
-      
+
       // Clear previous timeout
       if (modalSearchTimeoutRef.current) {
         clearTimeout(modalSearchTimeoutRef.current);
       }
-      
+
       // Only search if text length > 2
       if (text.trim().length > 2) {
         modalSearchTimeoutRef.current = setTimeout(() => {
@@ -880,8 +880,8 @@ const MapboxLocationScreen2 = () => {
     }, []);
 
     const searchTitle = searchMode === 'pickup' ? 'Change Pickup Location' : 'Select Destination';
-    const placeholder = searchMode === 'pickup' 
-      ? 'Search for pickup location...' 
+    const placeholder = searchMode === 'pickup'
+      ? 'Search for pickup location...'
       : 'Search destination...';
 
     return (
@@ -891,20 +891,20 @@ const MapboxLocationScreen2 = () => {
         visible={showSearchModal}
         onRequestClose={handleCloseModal}
       >
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalContainer}
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={handleCloseModal}
                 style={styles.modalCloseButton}
               >
                 <Ionicons name="arrow-back" size={24} color="#333" />
               </TouchableOpacity>
               <Text style={styles.modalTitle}>{searchTitle}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={handleCloseModal}
                 style={styles.modalDoneButton}
               >
@@ -927,7 +927,7 @@ const MapboxLocationScreen2 = () => {
                   blurOnSubmit={false}
                 />
                 {modalSearchQuery.length > 0 && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={handleClearSearch}
                     style={styles.clearButton}
                   >
@@ -937,7 +937,7 @@ const MapboxLocationScreen2 = () => {
               </View>
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.currentLocationOption}
               onPress={() => {
                 const location = {
@@ -966,21 +966,21 @@ const MapboxLocationScreen2 = () => {
                 data={modalSearchResults.length > 0 ? modalSearchResults : previousDestinations}
                 keyExtractor={(item) => item.id}
                 ListHeaderComponent={
-                  modalSearchResults.length === 0 && modalSearchQuery.length === 0 && (
+                  modalSearchResults.length === 0 && modalSearchQuery.length === 0 ? (
                     <Text style={styles.previousDestinationsTitle}>
                       {searchMode === 'pickup' ? 'Recent Locations' : 'Previous Destinations'}
                     </Text>
-                  )
+                  ) : null
                 }
                 renderItem={({ item }) => (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.searchResultItem}
                     onPress={() => handleSelectLocation(item)}
                   >
-                    <Ionicons 
-                      name={modalSearchResults.length > 0 ? "location-outline" : "time-outline"} 
-                      size={24} 
-                      color="#666" 
+                    <Ionicons
+                      name={modalSearchResults.length > 0 ? "location-outline" : "time-outline"}
+                      size={24}
+                      color="#666"
                     />
                     <View style={styles.searchResultTexts}>
                       <Text style={styles.searchResultName}>{item.name}</Text>
@@ -1000,7 +1000,7 @@ const MapboxLocationScreen2 = () => {
 
   // Memoized bottom sheet content
   const renderBottomSheetContent = useCallback(() => (
-    <BottomSheetScrollView 
+    <BottomSheetScrollView
       style={styles.bottomSheetContent}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
@@ -1017,7 +1017,7 @@ const MapboxLocationScreen2 = () => {
               <Text style={styles.rideId}>ID: {rideInfo.rideId}</Text>
             </View>
           </View>
-          
+
           <View style={styles.rideDetailsCard}>
             <View style={styles.driverDetailsSection}>
               <View style={styles.driverProfile}>
@@ -1039,7 +1039,7 @@ const MapboxLocationScreen2 = () => {
                 <Text style={styles.vehicleDetail}>{rideInfo.driver.licensePlate}</Text>
               </View>
             </View>
-            
+
             <View style={styles.routeDetails}>
               <View style={styles.routeRow}>
                 <View style={[styles.routeDot, { backgroundColor: '#4CAF50' }]} />
@@ -1057,7 +1057,7 @@ const MapboxLocationScreen2 = () => {
                 </View>
               </View>
             </View>
-            
+
             <View style={styles.fareBreakdown}>
               <Text style={styles.fareTitle}>Fare Breakdown</Text>
               <View style={styles.fareRow}>
@@ -1073,11 +1073,11 @@ const MapboxLocationScreen2 = () => {
                 <Text style={styles.totalFareValue}>₹{rideInfo.fare.total}</Text>
               </View>
             </View>
-            
+
             <View style={styles.paymentSection}>
               <Text style={styles.paymentTitle}>Payment Method</Text>
               <View style={styles.paymentOptions}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.paymentOption, selectedPayment === 'cash' && styles.selectedPaymentOption]}
                   onPress={() => setSelectedPayment('cash')}
                 >
@@ -1086,7 +1086,7 @@ const MapboxLocationScreen2 = () => {
                     Cash
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.paymentOption, selectedPayment === 'card' && styles.selectedPaymentOption]}
                   onPress={() => setSelectedPayment('card')}
                 >
@@ -1095,7 +1095,7 @@ const MapboxLocationScreen2 = () => {
                     Card
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.paymentOption, selectedPayment === 'upi' && styles.selectedPaymentOption]}
                   onPress={() => setSelectedPayment('upi')}
                 >
@@ -1107,22 +1107,22 @@ const MapboxLocationScreen2 = () => {
               </View>
             </View>
           </View>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.trackButton}
             onPress={() => Alert.alert('Tracking', 'Tracking your ride...')}
           >
             <Ionicons name="navigate" size={20} color="#fff" />
             <Text style={styles.trackButtonText}>Track Ride</Text>
           </TouchableOpacity>
-          
+
           {/* Driver Progress */}
           {isDriverMoving && (
             <View style={styles.driverProgress}>
               <Text style={styles.driverProgressText}>
                 {selectedDriver.name} is on the way to your pickup location
               </Text>
-              <ActivityIndicator size="small" color="#4CAF50" style={{marginTop: 8}} />
+              <ActivityIndicator size="small" color="#4CAF50" style={{ marginTop: 8 }} />
             </View>
           )}
         </View>
@@ -1130,7 +1130,7 @@ const MapboxLocationScreen2 = () => {
         <>
           {/* Pickup Location Card - Only show when destination not selected */}
           {!destination && showPickupCard && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.pickupCard}
               onPress={handleChangePickup}
             >
@@ -1148,9 +1148,9 @@ const MapboxLocationScreen2 = () => {
               <Ionicons name="chevron-forward" size={20} color="#999" />
             </TouchableOpacity>
           )}
-          
+
           {/* Destination Input Card */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.destinationCard}
             onPress={handleChangeDestination}
           >
@@ -1168,7 +1168,7 @@ const MapboxLocationScreen2 = () => {
             </View>
             <Ionicons name="chevron-forward" size={20} color="#999" />
           </TouchableOpacity>
-          
+
           {/* Show Available Drivers on Initial Step (when no destination) */}
           {!destination && (
             <>
@@ -1176,12 +1176,12 @@ const MapboxLocationScreen2 = () => {
                 <Text style={styles.availableRidesTitle}>Available Near You</Text>
                 <Text style={styles.driverCount}>{nearbyDrivers.length} drivers nearby</Text>
               </View>
-              
+
               <View style={styles.driversList}>
                 {nearbyDrivers.map((driver) => (
-                  <DriverItem 
-                    key={driver.id} 
-                    driver={driver} 
+                  <DriverItem
+                    key={driver.id}
+                    driver={driver}
                     isSelected={selectedDriver?.id === driver.id}
                     onSelectDriver={handleSelectDriver}
                   />
@@ -1189,7 +1189,7 @@ const MapboxLocationScreen2 = () => {
               </View>
             </>
           )}
-          
+
           {/* Recent Trips Section - Only show when destination not selected */}
           {!destination && (
             <View style={styles.recentTripsSection}>
@@ -1201,7 +1201,7 @@ const MapboxLocationScreen2 = () => {
               </View>
             </View>
           )}
-          
+
           {/* Fare Estimate & Available Rides - Only show when destination selected */}
           {destination && !selectedDriver && (
             <>
@@ -1222,17 +1222,17 @@ const MapboxLocationScreen2 = () => {
                   </Text>
                 </View>
               </View>
-              
+
               <View style={styles.availableRidesHeader}>
                 <Text style={styles.availableRidesTitle}>Available Rides</Text>
                 <Text style={styles.driverCount}>{nearbyDrivers.length} drivers nearby</Text>
               </View>
-              
+
               <View style={styles.driversList}>
                 {nearbyDrivers.map((driver) => (
-                  <DriverItem 
-                    key={driver.id} 
-                    driver={driver} 
+                  <DriverItem
+                    key={driver.id}
+                    driver={driver}
                     isSelected={selectedDriver?.id === driver.id}
                     onSelectDriver={handleSelectDriver}
                   />
@@ -1240,7 +1240,7 @@ const MapboxLocationScreen2 = () => {
               </View>
             </>
           )}
-          
+
           {/* Selected Driver Details - Only show when driver selected */}
           {selectedDriver && destination && !bookingConfirmed && (
             <>
@@ -1261,7 +1261,7 @@ const MapboxLocationScreen2 = () => {
                     <Ionicons name="close" size={24} color="#999" />
                   </TouchableOpacity>
                 </View>
-                
+
                 <View style={styles.selectedDriverDetails}>
                   <View style={styles.detailRow}>
                     <Ionicons name="time-outline" size={16} color="#666" />
@@ -1279,8 +1279,8 @@ const MapboxLocationScreen2 = () => {
                     <Text style={styles.detailValue}>{selectedDriver.availableSeats}</Text>
                   </View>
                 </View>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={styles.bookButton}
                   onPress={handleBookRide}
                 >
@@ -1297,16 +1297,16 @@ const MapboxLocationScreen2 = () => {
       )}
     </BottomSheetScrollView>
   ), [
-    bookingConfirmed, rideInfo, selectedDriver, destination, pickupLocation, 
+    bookingConfirmed, rideInfo, selectedDriver, destination, pickupLocation,
     nearbyDrivers, recentTrips, rideFare, selectedPayment, isDriverMoving,
-    showPickupCard, handleChangePickup, handleChangeDestination, 
+    showPickupCard, handleChangePickup, handleChangeDestination,
     handleSelectDriver, handleBookRide
   ]);
 
   // Memoized map header
   const MapHeader = useMemo(() => (
     showPickupCard && !destination && (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.pickupOverlay}
         onPress={handleChangePickup}
         activeOpacity={0.8}
@@ -1368,7 +1368,7 @@ const MapboxLocationScreen2 = () => {
           {MapHeader}
 
           {/* Current Location Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.currentLocationButton}
             onPress={getCurrentLocation}
           >

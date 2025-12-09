@@ -14,6 +14,9 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Button from '../components/Button';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,21 +38,21 @@ const RatingScreen = () => {
     const [tip, setTip] = useState<number | null>(null);
 
     const commonIssues = [
-        { id: 'route', icon: '🗺️', label: 'Wrong route' },
-        { id: 'rude', icon: '😠', label: 'Rude behavior' },
-        { id: 'clean', icon: '🧹', label: 'Unclean vehicle' },
-        { id: 'safety', icon: '⚠️', label: 'Unsafe driving' },
-        { id: 'late', icon: '⏰', label: 'Late arrival' },
-        { id: 'other', icon: '📝', label: 'Other issues' },
+        { id: 'route', icon: 'wrong-location', iconSet: 'MaterialCommunityIcons', label: 'Wrong route' },
+        { id: 'rude', icon: 'emoticon-angry', iconSet: 'MaterialCommunityIcons', label: 'Rude behavior' },
+        { id: 'clean', icon: 'car-wash', iconSet: 'MaterialCommunityIcons', label: 'Unclean vehicle' },
+        { id: 'safety', icon: 'shield-alert', iconSet: 'MaterialCommunityIcons', label: 'Unsafe driving' },
+        { id: 'late', icon: 'clock-alert', iconSet: 'MaterialCommunityIcons', label: 'Late arrival' },
+        { id: 'other', icon: 'note-text', iconSet: 'MaterialCommunityIcons', label: 'Other issues' },
     ];
 
     const compliments = [
-        { id: 'friendly', icon: '😊', label: 'Friendly driver' },
-        { id: 'safe', icon: '🛡️', label: 'Safe driving' },
-        { id: 'clean', icon: '✨', label: 'Clean vehicle' },
-        { id: 'punctual', icon: '⏱️', label: 'On time' },
-        { id: 'helpful', icon: '🤝', label: 'Very helpful' },
-        { id: 'skilled', icon: '👍', label: 'Great driving' },
+        { id: 'friendly', icon: 'emoticon-happy', iconSet: 'MaterialCommunityIcons', label: 'Friendly driver' },
+        { id: 'safe', icon: 'shield-check', iconSet: 'MaterialCommunityIcons', label: 'Safe driving' },
+        { id: 'clean', icon: 'auto-fix', iconSet: 'MaterialCommunityIcons', label: 'Clean vehicle' },
+        { id: 'punctual', icon: 'clock-check', iconSet: 'MaterialCommunityIcons', label: 'On time' },
+        { id: 'helpful', icon: 'hand-heart', iconSet: 'MaterialCommunityIcons', label: 'Very helpful' },
+        { id: 'skilled', icon: 'steering', iconSet: 'MaterialCommunityIcons', label: 'Great driving' },
     ];
 
     const tipOptions = [
@@ -101,12 +104,11 @@ const RatingScreen = () => {
                         onPress={() => handleRating(star)}
                         activeOpacity={0.7}
                     >
-                        <Text style={[
-                            styles.star,
-                            star <= rating ? styles.starFilled : styles.starEmpty
-                        ]}>
-                            {star <= rating ? '⭐' : '☆'}
-                        </Text>
+                        <FontAwesome
+                            name={star <= rating ? 'star' : 'star-o'}
+                            size={42}
+                            color={star <= rating ? '#F2C94C' : 'rgba(100, 100, 100, 0.3)'}
+                        />
                     </TouchableOpacity>
                 ))}
             </View>
@@ -116,162 +118,182 @@ const RatingScreen = () => {
     const renderOptions = (options: typeof commonIssues) => {
         return (
             <View style={styles.optionsContainer}>
-                {options.map((option) => (
-                    <TouchableOpacity
-                        key={option.id}
-                        style={[
-                            styles.optionChip,
-                            selectedIssues.includes(option.id) && styles.optionChipSelected
-                        ]}
-                        onPress={() => toggleIssue(option.id)}
-                        activeOpacity={0.7}
-                    >
-                        <Text style={styles.optionIcon}>{option.icon}</Text>
-                        <Text style={[
-                            styles.optionLabel,
-                            selectedIssues.includes(option.id) && styles.optionLabelSelected
-                        ]}>
-                            {option.label}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
+                {options.map((option) => {
+                    const IconComponent = option.iconSet === 'MaterialCommunityIcons' 
+                        ? MaterialCommunityIcons 
+                        : Icon;
+                    
+                    return (
+                        <TouchableOpacity
+                            key={option.id}
+                            style={[
+                                styles.optionChip,
+                                selectedIssues.includes(option.id) && styles.optionChipSelected
+                            ]}
+                            onPress={() => toggleIssue(option.id)}
+                            activeOpacity={0.7}
+                        >
+                            <IconComponent 
+                                name={option.icon} 
+                                size={18} 
+                                color={selectedIssues.includes(option.id) ? '#27ae60' : '#666'}
+                                style={styles.optionIcon}
+                            />
+                            <Text style={[
+                                styles.optionLabel,
+                                selectedIssues.includes(option.id) && styles.optionLabelSelected
+                            ]}>
+                                {option.label}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
             </View>
         );
     };
 
     return (
         <SafeAreaView style={styles.container}>
+            {/* Background circles like SignUpScreen */}
+            <View style={styles.backgroundContainer}>
+                <View style={styles.circle1} />
+                <View style={styles.circle2} />
+            </View>
+
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 <View style={styles.content}>
                     <View style={styles.imageContainer}>
-                        <Image
-                            source={require('../assets/rickshaw_green.png')}
-                            style={styles.successImage}
-                            resizeMode="contain"
-                        />
                         <View style={styles.successBadge}>
-                            <Text style={styles.successIcon}>✅</Text>
+                            <Icon name="check-circle" size={80} color="#27ae60" />
                         </View>
-                    </View>
-
-                    <View style={styles.headerContainer}>
-                        <Text style={styles.title}>
-                            Trip <Text style={styles.highlight}>Completed!</Text>
-                        </Text>
-                        <Text style={styles.subtitle}>
-                            Your ride has ended successfully.{'\n'}
-                            Rate your experience with the driver.
+                        <Text style={styles.successTitle}>Trip Completed!</Text>
+                        <Text style={styles.successSubtitle}>
+                            Your ride has ended successfully
                         </Text>
                     </View>
 
-                    <View style={styles.driverCard}>
-                        <View style={styles.driverProfile}>
-                            <View style={styles.driverAvatar}>
-                                <Text style={styles.avatarText}>RS</Text>
-                            </View>
-                            <View style={styles.driverDetails}>
-                                <Text style={styles.driverName}>Ramesh Sharma</Text>
-                                <Text style={styles.driverInfo}>Honda Activa • DL-01-AB-1234</Text>
-                                <Text style={styles.tripInfo}>15 Oct, 3:30 PM • ₹45 paid</Text>
+                    <View style={styles.card}>
+                        <View style={styles.driverCard}>
+                            <View style={styles.driverProfile}>
+                                <View style={styles.driverAvatar}>
+                                    <Text style={styles.avatarText}>RS</Text>
+                                </View>
+                                <View style={styles.driverDetails}>
+                                    <Text style={styles.driverName}>Ramesh Sharma</Text>
+                                    <Text style={styles.driverInfo}>Honda Activa • DL-01-AB-1234</Text>
+                                    <Text style={styles.tripInfo}>15 Oct, 3:30 PM • ₹45 paid</Text>
+                                </View>
                             </View>
                         </View>
-                    </View>
 
-                    <View style={styles.ratingSection}>
-                        <Text style={styles.sectionTitle}>How was your ride?</Text>
-                        {renderStars()}
-                        {rating > 0 && (
-                            <Text style={styles.ratingText}>
-                                {rating === 5 ? 'Excellent!' :
-                                 rating === 4 ? 'Very Good' :
-                                 rating === 3 ? 'Good' :
-                                 rating === 2 ? 'Poor' : 'Very Poor'}
-                            </Text>
+                        <View style={styles.divider} />
+
+                        <View style={styles.ratingSection}>
+                            <Text style={styles.sectionTitle}>How was your ride?</Text>
+                            {renderStars()}
+                            {rating > 0 && (
+                                <Text style={styles.ratingText}>
+                                    {rating === 5 ? 'Excellent!' :
+                                     rating === 4 ? 'Very Good' :
+                                     rating === 3 ? 'Good' :
+                                     rating === 2 ? 'Poor' : 'Very Poor'}
+                                </Text>
+                            )}
+                        </View>
+
+                        {rating > 0 && rating <= 3 && (
+                            <>
+                                <View style={styles.divider} />
+                                <View style={styles.feedbackSection}>
+                                    <Text style={styles.sectionTitle}>What went wrong?</Text>
+                                    {renderOptions(commonIssues)}
+                                </View>
+                            </>
                         )}
-                    </View>
 
-                    {rating > 0 && rating <= 3 && (
-                        <View style={styles.feedbackSection}>
-                            <Text style={styles.sectionTitle}>What went wrong?</Text>
-                            {renderOptions(commonIssues)}
+                        {rating >= 4 && (
+                            <>
+                                <View style={styles.divider} />
+                                <View style={styles.feedbackSection}>
+                                    <Text style={styles.sectionTitle}>What did you like?</Text>
+                                    {renderOptions(compliments)}
+                                </View>
+                            </>
+                        )}
+
+                        <View style={styles.divider} />
+
+                        <View style={styles.commentSection}>
+                            <Text style={styles.sectionTitle}>Additional feedback (Optional)</Text>
+                            <TextInput
+                                style={styles.commentInput}
+                                placeholder="Tell us more about your experience..."
+                                placeholderTextColor="#999"
+                                multiline
+                                numberOfLines={4}
+                                value={comment}
+                                onChangeText={setComment}
+                                textAlignVertical="top"
+                            />
                         </View>
-                    )}
 
-                    {rating >= 4 && (
-                        <View style={styles.feedbackSection}>
-                            <Text style={styles.sectionTitle}>What did you like?</Text>
-                            {renderOptions(compliments)}
+                        <View style={styles.divider} />
+
+                        <View style={styles.tipSection}>
+                            <Text style={styles.sectionTitle}>Add a tip for your driver</Text>
+                            <View style={styles.tipOptions}>
+                                {tipOptions.map((option) => (
+                                    <TouchableOpacity
+                                        key={option.amount}
+                                        style={[
+                                            styles.tipChip,
+                                            tip === option.amount && styles.tipChipSelected
+                                        ]}
+                                        onPress={() => setTip(tip === option.amount ? null : option.amount)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text style={[
+                                            styles.tipLabel,
+                                            tip === option.amount && styles.tipLabelSelected
+                                        ]}>
+                                            {option.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
                         </View>
-                    )}
 
-                    <View style={styles.commentSection}>
-                        <Text style={styles.sectionTitle}>Additional feedback</Text>
-                        <TextInput
-                            style={styles.commentInput}
-                            placeholder="Tell us more about your experience..."
-                            placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                            multiline
-                            numberOfLines={4}
-                            value={comment}
-                            onChangeText={setComment}
-                            textAlignVertical="top"
-                        />
-                    </View>
-
-                    <View style={styles.tipSection}>
-                        <Text style={styles.sectionTitle}>Add a tip for your driver</Text>
-                        <View style={styles.tipOptions}>
-                            {tipOptions.map((option) => (
-                                <TouchableOpacity
-                                    key={option.amount}
-                                    style={[
-                                        styles.tipChip,
-                                        tip === option.amount && styles.tipChipSelected
-                                    ]}
-                                    onPress={() => setTip(tip === option.amount ? null : option.amount)}
-                                    activeOpacity={0.7}
-                                >
-                                    <Text style={[
-                                        styles.tipLabel,
-                                        tip === option.amount && styles.tipLabelSelected
-                                    ]}>
-                                        {option.label}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    </View>
-
-                    <View style={styles.summarySection}>
-                        <View style={styles.summaryRow}>
-                            <Text style={styles.summaryLabel}>Trip Fare</Text>
-                            <Text style={styles.summaryValue}>₹45.00</Text>
-                        </View>
-                        {tip && (
+                        <View style={styles.summarySection}>
                             <View style={styles.summaryRow}>
-                                <Text style={styles.summaryLabel}>Driver Tip</Text>
-                                <Text style={styles.summaryValue}>+₹{tip}.00</Text>
+                                <Text style={styles.summaryLabel}>Trip Fare</Text>
+                                <Text style={styles.summaryValue}>₹45.00</Text>
                             </View>
-                        )}
-                        <View style={[styles.summaryRow, styles.summaryRowTotal]}>
-                            <Text style={styles.totalLabel}>Total Paid</Text>
-                            <Text style={styles.totalValue}>₹{45 + (tip || 0)}.00</Text>
+                            {tip && (
+                                <View style={styles.summaryRow}>
+                                    <Text style={styles.summaryLabel}>Driver Tip</Text>
+                                    <Text style={styles.summaryValue}>+₹{tip}.00</Text>
+                                </View>
+                            )}
+                            <View style={[styles.summaryRow, styles.summaryRowTotal]}>
+                                <Text style={styles.totalLabel}>Total Paid</Text>
+                                <Text style={styles.totalValue}>₹{45 + (tip || 0)}.00</Text>
+                            </View>
                         </View>
-                    </View>
 
-                    <View style={styles.buttonContainer}>
-                        <Button
-                            title="Submit Feedback"
-                            onPress={handleSubmit}
-                            variant="primary"
-                            style={styles.submitButton}
-                        />
-                        <Button
-                            title="Book Another Ride"
-                            onPress={handleBookAnother}
-                            variant="secondary"
-                            style={styles.bookButton}
-                        />
+                        <View style={styles.buttonContainer}>
+                            <Button
+                                title="Submit Feedback"
+                                onPress={handleSubmit}
+                                variant="primary"
+                                style={styles.submitButton}
+                            />
+                            <TouchableOpacity 
+                                style={styles.bookButton}
+                                onPress={handleBookAnother}
+                            >
+                                <Text style={styles.bookButtonText}>Book Another Ride</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
             </ScrollView>
@@ -284,67 +306,75 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#219653',
     },
+    backgroundContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        overflow: 'hidden',
+        zIndex: 0,
+    },
+    circle1: {
+        position: 'absolute',
+        top: -width * 0.2,
+        left: -width * 0.2,
+        width: width * 0.8,
+        height: width * 0.8,
+        borderRadius: (width * 0.8) / 2,
+        backgroundColor: '#197A42',
+    },
+    circle2: {
+        position: 'absolute',
+        bottom: -width * 0.2,
+        right: -width * 0.2,
+        width: width * 0.9,
+        height: width * 0.9,
+        borderRadius: (width * 0.9) / 2,
+        backgroundColor: '#27AE60',
+        opacity: 0.6,
+    },
     scrollView: {
         flex: 1,
+        zIndex: 1,
     },
     content: {
-        paddingHorizontal: 30,
+        paddingHorizontal: 20,
         paddingVertical: 30,
         paddingBottom: 50,
     },
     imageContainer: {
         alignItems: 'center',
         marginBottom: 30,
-        position: 'relative',
-    },
-    successImage: {
-        width: width * 0.4,
-        height: width * 0.3,
     },
     successBadge: {
-        position: 'absolute',
-        top: -10,
-        right: '35%',
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: '#F2C94C',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 3,
-        borderColor: '#FFFFFF',
+        marginBottom: 20,
     },
-    successIcon: {
-        fontSize: 24,
-    },
-    headerContainer: {
-        alignItems: 'center',
-        marginBottom: 30,
-    },
-    title: {
+    successTitle: {
         fontSize: 32,
         fontWeight: 'bold',
         color: '#FFFFFF',
-        marginBottom: 12,
+        marginBottom: 8,
         textAlign: 'center',
     },
-    highlight: {
-        color: '#F2C94C',
-    },
-    subtitle: {
+    successSubtitle: {
         fontSize: 16,
         color: '#FFFFFF',
         textAlign: 'center',
-        lineHeight: 24,
         opacity: 0.9,
     },
-    driverCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: 16,
+    card: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 15,
         padding: 20,
-        marginBottom: 30,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.2)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        elevation: 5,
+    },
+    driverCard: {
+        marginBottom: 0,
     },
     driverProfile: {
         flexDirection: 'row',
@@ -362,7 +392,7 @@ const styles = StyleSheet.create({
     avatarText: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#219653',
+        color: '#27ae60',
     },
     driverDetails: {
         flex: 1,
@@ -370,28 +400,31 @@ const styles = StyleSheet.create({
     driverName: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#FFFFFF',
+        color: '#333',
         marginBottom: 4,
     },
     driverInfo: {
         fontSize: 14,
-        color: '#FFFFFF',
-        opacity: 0.8,
+        color: '#666',
         marginBottom: 2,
     },
     tripInfo: {
-        fontSize: 14,
-        color: '#FFFFFF',
-        opacity: 0.7,
+        fontSize: 13,
+        color: '#999',
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#f0f0f0',
+        marginVertical: 20,
     },
     ratingSection: {
         alignItems: 'center',
-        marginBottom: 30,
+        marginBottom: 0,
     },
     sectionTitle: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: '600',
-        color: '#FFFFFF',
+        color: '#333',
         marginBottom: 16,
         textAlign: 'center',
     },
@@ -399,109 +432,102 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         marginBottom: 12,
+        gap: 8,
     },
     starButton: {
-        marginHorizontal: 8,
-    },
-    star: {
-        fontSize: 40,
-    },
-    starFilled: {
-        color: '#F2C94C',
-    },
-    starEmpty: {
-        color: 'rgba(255, 255, 255, 0.3)',
+        padding: 4,
     },
     ratingText: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
-        color: '#F2C94C',
+        color: '#27ae60',
+        marginTop: 8,
     },
     feedbackSection: {
-        marginBottom: 30,
+        marginBottom: 0,
     },
     optionsContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
+        gap: 8,
     },
     optionChip: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: '#f9f9f9',
         borderRadius: 20,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        marginHorizontal: 6,
-        marginVertical: 4,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderColor: '#e0e0e0',
     },
     optionChipSelected: {
-        backgroundColor: 'rgba(242, 201, 76, 0.2)',
-        borderColor: '#F2C94C',
+        backgroundColor: '#E8F5E9',
+        borderColor: '#27ae60',
     },
     optionIcon: {
-        fontSize: 16,
         marginRight: 6,
     },
     optionLabel: {
-        fontSize: 14,
-        color: '#FFFFFF',
-        opacity: 0.9,
+        fontSize: 13,
+        color: '#666',
+        fontWeight: '500',
     },
     optionLabelSelected: {
-        color: '#F2C94C',
+        color: '#27ae60',
         fontWeight: '600',
     },
     commentSection: {
-        marginBottom: 30,
+        marginBottom: 0,
     },
     commentInput: {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: 12,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 8,
         paddingHorizontal: 16,
         paddingVertical: 12,
-        fontSize: 16,
-        color: '#FFFFFF',
+        fontSize: 14,
+        color: '#333',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderColor: '#e0e0e0',
         minHeight: 100,
     },
     tipSection: {
-        marginBottom: 30,
+        marginBottom: 20,
     },
     tipOptions: {
         flexDirection: 'row',
-        justifyContent: 'space-around',
+        justifyContent: 'space-between',
+        gap: 10,
     },
     tipChip: {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: 12,
-        paddingHorizontal: 20,
-        paddingVertical: 10,
+        flex: 1,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 8,
+        paddingVertical: 12,
+        alignItems: 'center',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderColor: '#e0e0e0',
     },
     tipChipSelected: {
-        backgroundColor: '#F2C94C',
-        borderColor: '#F2C94C',
+        backgroundColor: '#27ae60',
+        borderColor: '#27ae60',
     },
     tipLabel: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '600',
-        color: '#FFFFFF',
+        color: '#666',
     },
     tipLabelSelected: {
-        color: '#219653',
+        color: '#FFFFFF',
     },
     summarySection: {
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: 12,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 8,
         padding: 16,
-        marginBottom: 30,
+        marginBottom: 24,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: '#e0e0e0',
     },
     summaryRow: {
         flexDirection: 'row',
@@ -511,41 +537,48 @@ const styles = StyleSheet.create({
     },
     summaryRowTotal: {
         borderTopWidth: 1,
-        borderTopColor: 'rgba(255, 255, 255, 0.2)',
-        paddingTop: 8,
+        borderTopColor: '#e0e0e0',
+        paddingTop: 12,
         marginTop: 8,
         marginBottom: 0,
     },
     summaryLabel: {
         fontSize: 14,
-        color: '#FFFFFF',
-        opacity: 0.8,
+        color: '#666',
     },
     summaryValue: {
         fontSize: 14,
-        color: '#FFFFFF',
-        fontWeight: '500',
+        color: '#333',
+        fontWeight: '600',
     },
     totalLabel: {
         fontSize: 16,
-        color: '#FFFFFF',
+        color: '#333',
         fontWeight: 'bold',
     },
     totalValue: {
         fontSize: 18,
-        color: '#F2C94C',
+        color: '#27ae60',
         fontWeight: 'bold',
     },
     buttonContainer: {
         width: '100%',
     },
     submitButton: {
-        marginBottom: 16,
-        borderWidth: 1,
-        borderColor: '#FFFFFF',
+        marginBottom: 12,
     },
     bookButton: {
-        // No extra styles needed for secondary button
+        backgroundColor: '#f9f9f9',
+        borderRadius: 8,
+        paddingVertical: 14,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+    },
+    bookButtonText: {
+        color: '#27ae60',
+        fontSize: 16,
+        fontWeight: '600',
     },
 });
 

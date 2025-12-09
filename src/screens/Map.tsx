@@ -15,11 +15,11 @@ import {
   Animated,
   Easing
 } from 'react-native';
-import Mapbox, { 
-  Camera, 
-  PointAnnotation, 
-  ShapeSource, 
-  LineLayer 
+import Mapbox, {
+  Camera,
+  PointAnnotation,
+  ShapeSource,
+  LineLayer
 } from '@rnmapbox/maps';
 import Geolocation from 'react-native-geolocation-service';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -38,39 +38,39 @@ const MAP_HEIGHT = height * 0.42;
 const MapboxLocationScreen = () => {
 
   const [currentLocation, setCurrentLocation] = useState({
-    latitude: 25.3176,
-    longitude: 82.9739,
-    address: 'Varanasi, Uttar Pradesh'
+    latitude: 29.0333,
+    longitude: 79.4833,
+    address: 'Pantnagar, Uttarakhand'
   });
   const [pickupLocation, setPickupLocation] = useState({
-    latitude: 25.3176,
-    longitude: 82.9739,
+    latitude: 29.0333,
+    longitude: 79.4833,
     address: 'Current Location'
   });
-  const navigation = useNavigation();
+  const navigation = useNavigation() as any;
 
-  const [destination, setDestination] = useState(null);
-  const [nearbyDrivers, setNearbyDrivers] = useState([]);
-  const [selectedDriver, setSelectedDriver] = useState(null);
+  const [destination, setDestination] = useState<any>(null);
+  const [nearbyDrivers, setNearbyDrivers] = useState<any[]>([]);
+  const [selectedDriver, setSelectedDriver] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
-  const [routeCoordinates, setRouteCoordinates] = useState([]);
+  const [routeCoordinates, setRouteCoordinates] = useState<any[]>([]);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
-  const [rideInfo, setRideInfo] = useState(null);
-  const [rideFare, setRideFare] = useState(null);
+  const [rideInfo, setRideInfo] = useState<any>(null);
+  const [rideFare, setRideFare] = useState<any>(null);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState('cash');
   const [showPickupCard, setShowPickupCard] = useState(true);
   const [searchMode, setSearchMode] = useState('destination');
-  
 
-  const [animatingDriver, setAnimatingDriver] = useState(null);
+
+  const [animatingDriver, setAnimatingDriver] = useState<any>(null);
   const [animationProgress, setAnimationProgress] = useState(0);
   const [cameraAdjusted, setCameraAdjusted] = useState(false);
   const [driverArrived, setDriverArrived] = useState(false);
-  const [movingDriverCoords, setMovingDriverCoords] = useState(null);
-  
- 
+  const [movingDriverCoords, setMovingDriverCoords] = useState<any>(null);
+
+
   const [recentTrips, setRecentTrips] = useState([
     {
       id: '1',
@@ -106,24 +106,24 @@ const MapboxLocationScreen = () => {
       status: 'completed'
     }
   ]);
-  
+
   // Refs
-  const cameraRef = useRef();
-  const mapRef = useRef();
-  const bottomSheetModalRef = useRef(null);
-  const animationRef = useRef(null);
-  
+  const cameraRef = useRef<any>(null);
+  const mapRef = useRef<any>(null);
+  const bottomSheetModalRef = useRef<any>(null);
+  const animationRef = useRef<any>(null);
+
   // Animated values
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const driverPulseAnim = useRef(new Animated.Value(1)).current;
-  
+
   const snapPoints = useMemo(() => ['58%', '70%', '90%'], []);
 
   // Initialize
   useEffect(() => {
     requestLocationPermission();
-    
-   
+
+
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
@@ -140,7 +140,7 @@ const MapboxLocationScreen = () => {
         })
       ])
     ).start();
-    
+
     return () => {
       if (animationRef.current) {
         clearInterval(animationRef.current);
@@ -233,21 +233,21 @@ const MapboxLocationScreen = () => {
 
   const getCurrentLocation = () => {
     setLoading(true);
-    
+
     Geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        
+
         const address = await reverseGeocode(latitude, longitude);
-        
+
         const newLocation = {
           latitude,
           longitude,
           address: address || 'Your current location'
         };
-        
+
         setCurrentLocation(newLocation);
-        
+
         // Only update pickup if it's the default one
         if (pickupLocation.address === 'Current Location') {
           setPickupLocation({
@@ -255,11 +255,11 @@ const MapboxLocationScreen = () => {
             longitude,
             address: address || 'Current Location'
           });
-          
+
           // Regenerate drivers around new location
           generateMockDrivers(latitude, longitude);
         }
-        
+
         setLoading(false);
       },
       (error) => {
@@ -267,15 +267,15 @@ const MapboxLocationScreen = () => {
         setLoading(false);
         Alert.alert('Error', 'Unable to get your current location');
       },
-      { 
-        enableHighAccuracy: true, 
-        timeout: 15000, 
-        maximumAge: 10000 
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 10000
       }
     );
   };
 
-  const reverseGeocode = async (lat, lng) => {
+  const reverseGeocode = async (lat: any, lng: any) => {
     try {
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_ACCESS_TOKEN}`
@@ -291,7 +291,7 @@ const MapboxLocationScreen = () => {
     }
   };
 
-  const generateMockDrivers = (lat, lng) => {
+  const generateMockDrivers = (lat: any, lng: any) => {
     const mockDrivers = [
       {
         id: '1',
@@ -362,23 +362,23 @@ const MapboxLocationScreen = () => {
         driverImage: 'https://randomuser.me/api/portraits/men/23.jpg'
       }
     ];
-    
+
     setNearbyDrivers(mockDrivers);
   };
 
-  const updateDriversForNewPickup = (newLat, newLng) => {
+  const updateDriversForNewPickup = (newLat: any, newLng: any) => {
     const newDrivers = nearbyDrivers.map(driver => {
       // Calculate new position relative to new pickup
       const latDiff = driver.originalCoordinates[1] - pickupLocation.latitude;
       const lngDiff = driver.originalCoordinates[0] - pickupLocation.longitude;
-      
+
       const newDriverLat = newLat + latDiff;
       const newDriverLng = newLng + lngDiff;
-      
+
       // Update ETA based on distance to new pickup
       const distance = Math.sqrt(Math.pow(lngDiff * 111, 2) + Math.pow(latDiff * 111, 2));
       const newEta = Math.max(1, Math.round(distance * 10)); // Rough estimate
-      
+
       return {
         ...driver,
         coordinates: [newDriverLng, newDriverLat],
@@ -387,9 +387,9 @@ const MapboxLocationScreen = () => {
         eta: `${newEta} min`
       };
     });
-    
+
     setNearbyDrivers(newDrivers);
-    
+
     // If a driver was selected, update their position too
     if (selectedDriver) {
       const updatedSelectedDriver = newDrivers.find(d => d.id === selectedDriver.id);
@@ -399,9 +399,9 @@ const MapboxLocationScreen = () => {
     }
   };
 
-  const calculateRoute = async (destCoords) => {
+  const calculateRoute = async (destCoords: any) => {
     if (!pickupLocation) return;
-    
+
     try {
       const response = await fetch(
         `https://api.mapbox.com/directions/v5/mapbox/driving/` +
@@ -410,16 +410,16 @@ const MapboxLocationScreen = () => {
         `geometries=geojson&access_token=${MAPBOX_ACCESS_TOKEN}`
       );
       const data = await response.json();
-      
+
       if (data.routes && data.routes.length > 0) {
         const route = data.routes[0];
         setRouteCoordinates(route.geometry.coordinates);
-        
+
         const distanceInKm = route.distance / 1000;
         const baseFare = 50;
         const perKmRate = 12;
         const estimatedFare = Math.round(baseFare + (distanceInKm * perKmRate));
-        
+
         setRideFare({
           base: baseFare,
           distance: distanceInKm.toFixed(1),
@@ -435,10 +435,10 @@ const MapboxLocationScreen = () => {
         [destCoords[0], destCoords[1]]
       ];
       setRouteCoordinates(mockRoute);
-      
+
       const distance = 8.5;
       const estimatedFare = Math.round(50 + (distance * 12));
-      
+
       setRideFare({
         base: 50,
         distance: distance.toFixed(1),
@@ -449,11 +449,11 @@ const MapboxLocationScreen = () => {
     }
   };
 
-  const startDriverAnimation = (driver) => {
+  const startDriverAnimation = (driver: any) => {
     if (animationRef.current) {
       clearInterval(animationRef.current);
     }
-    
+
     // Start driver pulse animation
     Animated.loop(
       Animated.sequence([
@@ -471,56 +471,56 @@ const MapboxLocationScreen = () => {
         })
       ])
     ).start();
-    
+
     setAnimatingDriver(driver);
     setAnimationProgress(0);
     setDriverArrived(false);
-    
+
     // Set initial moving driver coordinates
     setMovingDriverCoords(driver.coordinates);
-    
+
     const animationDuration = 10000; // 10 seconds
     const steps = 100;
     const interval = animationDuration / steps;
-    
+
     let progress = 0;
-    
+
     animationRef.current = setInterval(() => {
       progress += 1;
       setAnimationProgress(progress);
-      
+
       if (progress <= 100) {
         const startLng = driver.originalCoordinates[0];
         const startLat = driver.originalCoordinates[1];
         const endLng = pickupLocation.longitude;
         const endLat = pickupLocation.latitude;
-        
+
         // Smooth easing function
         const easeProgress = 1 - Math.pow(1 - (progress / 100), 2);
-        
+
         const newLng = startLng + (endLng - startLng) * easeProgress;
         const newLat = startLat + (endLat - startLat) * easeProgress;
-        
+
         // Update the moving driver coordinates
         setMovingDriverCoords([newLng, newLat]);
-        
+
         // Also update in the nearbyDrivers array for the marker
-        setNearbyDrivers(prev => 
-          prev.map(d => 
-            d.id === driver.id 
+        setNearbyDrivers(prev =>
+          prev.map(d =>
+            d.id === driver.id
               ? { ...d, coordinates: [newLng, newLat] }
               : d
           )
         );
       }
-      
+
       if (progress >= 100) {
         clearInterval(animationRef.current);
         animationRef.current = null;
         setDriverArrived(true);
         // Stop pulse animation
         driverPulseAnim.stopAnimation();
-        
+
         Alert.alert(
           'Driver Arrived! 🎉',
           `${driver.name} has arrived at your pickup location!\nYour ride is ready to go.`,
@@ -530,54 +530,60 @@ const MapboxLocationScreen = () => {
     }, interval);
   };
 
- const adjustCameraToFitPoints = () => {
-  let pointsToShow = [[pickupLocation.longitude, pickupLocation.latitude]];
+  const adjustCameraToFitPoints = () => {
+    let pointsToShow = [[pickupLocation.longitude, pickupLocation.latitude]];
 
-  if (destination) {
-    pointsToShow.push(destination.coordinates);
-  }
+    if (destination) {
+      pointsToShow.push(destination.coordinates);
+    }
 
-  if (selectedDriver && bookingConfirmed) {
-    pointsToShow.push(selectedDriver.coordinates);
-  }
+    if (selectedDriver && bookingConfirmed) {
+      pointsToShow.push(selectedDriver.coordinates);
+    }
 
-  if (!destination && nearbyDrivers.length > 0) {
-    nearbyDrivers.forEach(driver => {
-      pointsToShow.push(driver.coordinates);
-    });
-  }
+    if (!destination && nearbyDrivers.length > 0) {
+      nearbyDrivers.forEach(driver => {
+        if (driver.coordinates && Array.isArray(driver.coordinates) && driver.coordinates.length === 2) {
+          pointsToShow.push(driver.coordinates);
+        }
+      });
+    }
 
-  const lngs = pointsToShow.map(p => p[0]);
-  const lats = pointsToShow.map(p => p[1]);
+    // Filter out any invalid points
+    pointsToShow = pointsToShow.filter(p => Array.isArray(p) && p.length === 2 && !isNaN(p[0]) && !isNaN(p[1]));
+    if (pointsToShow.length === 0) return;
 
-  let minLng = Math.min(...lngs);
-  let maxLng = Math.max(...lngs);
-  let minLat = Math.min(...lats);
-  let maxLat = Math.max(...lats);
+    const lngs = pointsToShow.map(p => p[0]);
+    const lats = pointsToShow.map(p => p[1]);
 
- 
-  const expandFactor = 0.08; 
-  minLng -= expandFactor;
-  maxLng += expandFactor;
-  minLat -= expandFactor;
-  maxLat += expandFactor;
+    let minLng = Math.min(...lngs);
+    let maxLng = Math.max(...lngs);
+    let minLat = Math.min(...lats);
+    let maxLat = Math.max(...lats);
 
-  if (cameraRef.current) {
-    cameraRef.current.fitBounds(
-      [minLng, minLat],  
-      [maxLng, maxLat],
-      {
-        padding: {
-          top: 160,
-          bottom: 260,
-          left: 80,
-          right: 80,
-        },
-        animationDuration: 1200,
-      }
-    );
-  }
-};
+
+    const expandFactor = 0.08;
+    minLng -= expandFactor;
+    maxLng += expandFactor;
+    minLat -= expandFactor;
+    maxLat += expandFactor;
+
+    if (cameraRef.current) {
+      cameraRef.current.fitBounds(
+        [minLng, minLat],
+        [maxLng, maxLat],
+        {
+          padding: {
+            top: 160,
+            bottom: 260,
+            left: 80,
+            right: 80,
+          },
+          animationDuration: 1200,
+        }
+      );
+    }
+  };
 
 
   const focusCameraOnPickup = () => {
@@ -591,11 +597,15 @@ const MapboxLocationScreen = () => {
     }
   };
 
-  const handleSelectDriver = (driver) => {
+  const handleSelectDriver = (driver: any) => {
     setSelectedDriver(driver);
   };
 
   const handleBookRide = async () => {
+    if (!rideFare) {
+      Alert.alert('Error', 'Fare not calculated yet. Please wait.');
+      return;
+    }
     if (!selectedDriver || !destination) {
       Alert.alert('Error', 'Please select a driver and destination first');
       return;
@@ -608,17 +618,17 @@ const MapboxLocationScreen = () => {
       fare: rideFare,
       paymentMethod: selectedPayment,
       bookingTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      bookingDate: new Date().toLocaleDateString('en-IN', { 
-        weekday: 'long', 
-        month: 'short', 
-        day: 'numeric' 
+      bookingDate: new Date().toLocaleDateString('en-IN', {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric'
       }),
       rideId: `RIDE${Date.now().toString().slice(-6)}`
     };
 
     setRideInfo(rideDetails);
     setBookingConfirmed(true);
-    
+
     const newTrip = {
       id: Date.now().toString(),
       date: 'Today, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -630,9 +640,9 @@ const MapboxLocationScreen = () => {
       rating: selectedDriver.rating,
       status: 'upcoming'
     };
-    
+
     setRecentTrips(prev => [newTrip, ...prev]);
-    
+
     Alert.alert(
       'Ride Booked Successfully! 🚗',
       `Your ride with ${selectedDriver.name} has been confirmed.\n\nRide ID: ${rideDetails.rideId}\nEstimated Fare: ₹${rideFare.total}\nEstimated Arrival: ${selectedDriver.eta}`,
@@ -650,36 +660,36 @@ const MapboxLocationScreen = () => {
     setShowSearchModal(true);
   };
 
-  const handleSelectLocation = async (location) => {
+  const handleSelectLocation = async (location: any) => {
     if (searchMode === 'pickup') {
       const newPickup = {
         latitude: location.coordinates[1],
         longitude: location.coordinates[0],
         address: location.address
       };
-      
+
       setPickupLocation(newPickup);
-      
+
       // Update drivers for new pickup location
       updateDriversForNewPickup(newPickup.latitude, newPickup.longitude);
-      
+
       // Clear any selected driver since pickup location changed
       setSelectedDriver(null);
       setBookingConfirmed(false);
       setRideInfo(null);
-      
+
       if (destination) {
         await calculateRoute(destination.coordinates);
       }
-      
+
       setCameraAdjusted(false);
-      
+
       Alert.alert(
         'Pickup Location Updated ✅',
         `Pickup location set to ${location.name}`,
         [{ text: 'OK', style: 'default' }]
       );
-      
+
       // Focus camera on the new pickup location
       setTimeout(() => {
         focusCameraOnPickup();
@@ -690,16 +700,16 @@ const MapboxLocationScreen = () => {
         address: location.address,
         coordinates: location.coordinates
       };
-      
+
       setDestination(newDestination);
       setCameraAdjusted(false);
-      
+
       await calculateRoute(newDestination.coordinates);
     }
-    
+
     setShowSearchModal(false);
     setShowPickupCard(false);
-    
+
     // Adjust camera after a short delay
     setTimeout(() => {
       adjustCameraToFitPoints();
@@ -772,7 +782,7 @@ const MapboxLocationScreen = () => {
         </PointAnnotation>
       );
     }
-    
+
     // Show selected driver marker (non-animated)
     if (selectedDriver && !bookingConfirmed) {
       return (
@@ -787,7 +797,7 @@ const MapboxLocationScreen = () => {
         </PointAnnotation>
       );
     }
-    
+
     // Show all drivers when no destination selected
     if (!destination) {
       return nearbyDrivers.map(driver => (
@@ -803,7 +813,7 @@ const MapboxLocationScreen = () => {
         </PointAnnotation>
       ));
     }
-    
+
     // Show drivers when destination is selected
     return nearbyDrivers.map(driver => (
       <PointAnnotation
@@ -824,12 +834,13 @@ const MapboxLocationScreen = () => {
 
   const renderRoute = () => {
     if (routeCoordinates.length < 2) return null;
-    
+
     return (
       <ShapeSource
         id="routeSource"
         shape={{
           type: 'Feature',
+          properties: {},
           geometry: {
             type: 'LineString',
             coordinates: routeCoordinates
@@ -851,8 +862,8 @@ const MapboxLocationScreen = () => {
   };
 
   // Driver Item Component
-  const DriverItem = ({ driver, isSelected }) => (
-    <TouchableOpacity 
+  const DriverItem = ({ driver, isSelected }: any) => (
+    <TouchableOpacity
       style={[styles.driverItem, isSelected && styles.selectedDriverItem]}
       onPress={() => handleSelectDriver(driver)}
       activeOpacity={0.7}
@@ -860,20 +871,21 @@ const MapboxLocationScreen = () => {
       <View style={styles.driverIconContainer}>
         <View style={[
           styles.driverIconBackground,
-          { backgroundColor: 
-            driver.vehicleType === 'suv' ? '#E3F2FD' : 
-            driver.vehicleType === 'sedan' ? '#E8F5E9' : '#FFF3E0' 
+          {
+            backgroundColor:
+              driver.vehicleType === 'suv' ? '#E3F2FD' :
+                driver.vehicleType === 'sedan' ? '#E8F5E9' : '#FFF3E0'
           }
         ]}>
-          <FontAwesome 
-            name="car" 
-            size={24} 
-            color={driver.vehicleType === 'suv' ? '#2196F3' : 
-                   driver.vehicleType === 'sedan' ? '#4CAF50' : '#FF9800'} 
+          <FontAwesome
+            name="car"
+            size={24}
+            color={driver.vehicleType === 'suv' ? '#2196F3' :
+              driver.vehicleType === 'sedan' ? '#4CAF50' : '#FF9800'}
           />
         </View>
       </View>
-      
+
       <View style={styles.driverInfo}>
         <View style={styles.driverHeader}>
           <View style={styles.driverNameContainer}>
@@ -888,7 +900,7 @@ const MapboxLocationScreen = () => {
             <Text style={styles.etaBadgeText}>{driver.eta}</Text>
           </View>
         </View>
-        
+
         <View style={styles.vehicleDetails}>
           <Text style={styles.vehicleText}>{driver.vehicle}</Text>
           <View style={styles.vehicleTags}>
@@ -901,7 +913,7 @@ const MapboxLocationScreen = () => {
             </View>
           </View>
         </View>
-        
+
         <View style={styles.driverFooter}>
           <View style={styles.distanceContainer}>
             <Ionicons name="navigate-outline" size={12} color="#666" />
@@ -912,18 +924,22 @@ const MapboxLocationScreen = () => {
           </View>
         </View>
       </View>
-      
+
       <View style={styles.driverPrice}>
         <Text style={styles.priceText}>₹{driver.pricePerKm}/km</Text>
         <View style={[
           styles.priceRangeBadge,
-          { backgroundColor: driver.priceRange === 'Premium' ? '#FFEBEE' : 
-                           driver.priceRange === 'Comfort' ? '#F3E5F5' : '#E8F5E9' }
+          {
+            backgroundColor: driver.priceRange === 'Premium' ? '#FFEBEE' :
+              driver.priceRange === 'Comfort' ? '#F3E5F5' : '#E8F5E9'
+          }
         ]}>
           <Text style={[
             styles.priceRangeText,
-            { color: driver.priceRange === 'Premium' ? '#D32F2F' : 
-                    driver.priceRange === 'Comfort' ? '#7B1FA2' : '#388E3C' }
+            {
+              color: driver.priceRange === 'Premium' ? '#D32F2F' :
+                driver.priceRange === 'Comfort' ? '#7B1FA2' : '#388E3C'
+            }
           ]}>
             {driver.priceRange}
           </Text>
@@ -933,7 +949,7 @@ const MapboxLocationScreen = () => {
   );
 
   // Recent Trip Item
-  const RecentTripItem = ({ trip }) => (
+  const RecentTripItem = ({ trip }: any) => (
     <View style={styles.recentTripItem}>
       <View style={styles.recentTripIcon}>
         <View style={styles.recentTripIconBackground}>
@@ -965,7 +981,7 @@ const MapboxLocationScreen = () => {
 
   // Bottom Sheet Content
   const renderBottomSheetContent = () => (
-    <BottomSheetScrollView 
+    <BottomSheetScrollView
       style={styles.bottomSheetContent}
       showsVerticalScrollIndicator={false}
     >
@@ -980,7 +996,7 @@ const MapboxLocationScreen = () => {
               <Text style={styles.rideId}>ID: {rideInfo.rideId}</Text>
             </View>
           </View>
-          
+
           <View style={styles.rideDetailsCard}>
             <View style={styles.driverDetailsSection}>
               <View style={styles.driverProfile}>
@@ -1006,7 +1022,7 @@ const MapboxLocationScreen = () => {
                 </View>
               </View>
             </View>
-            
+
             <View style={styles.routeDetails}>
               <View style={styles.routeRow}>
                 <View style={[styles.routeDot, { backgroundColor: '#4CAF50' }]} />
@@ -1024,7 +1040,7 @@ const MapboxLocationScreen = () => {
                 </View>
               </View>
             </View>
-            
+
             <View style={styles.fareBreakdown}>
               <Text style={styles.fareTitle}>Fare Breakdown</Text>
               <View style={styles.fareRow}>
@@ -1040,46 +1056,50 @@ const MapboxLocationScreen = () => {
                 <Text style={styles.totalFareValue}>₹{rideInfo.fare.total}</Text>
               </View>
             </View>
-            
+
             <View style={styles.paymentSection}>
               <Text style={styles.paymentTitle}>Payment Method</Text>
-            <TouchableOpacity style={{zIndex:200000}} onPress={()=>{navigation.navigate('Payment');
-}}>  <View style={styles.paymentOptions}>
-                <TouchableOpacity 
-                  style={[styles.paymentOption, selectedPayment === 'cash' && styles.selectedPaymentOption]}
-                  onPress={() => {setSelectedPayment('cash');navigation.navigate('Payment');
-}}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="cash" size={20} color={selectedPayment === 'cash' ? '#4CAF50' : '#666'} />
-                  <Text style={[styles.paymentOptionText, selectedPayment === 'cash' && styles.selectedPaymentOptionText]}>
-                    Cash
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.paymentOption, selectedPayment === 'card' && styles.selectedPaymentOption]}
-                  onPress={() =>{navigation.navigate('Payment');
-setSelectedPayment('card')}}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="card" size={20} color={selectedPayment === 'card' ? '#4CAF50' : '#666'} />
-                  <Text style={[styles.paymentOptionText, selectedPayment === 'card' && styles.selectedPaymentOptionText]}>
-                    Card
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.paymentOption, selectedPayment === 'upi' && styles.selectedPaymentOption]}
-                  onPress={() => {navigation.navigate('Payment');;setSelectedPayment('upi')}}
-                  activeOpacity={0.7}
-                >
-                  <FontAwesome name="mobile" size={22} color={selectedPayment === 'upi' ? '#4CAF50' : '#666'} />
-                  <Text style={[styles.paymentOptionText, selectedPayment === 'upi' && styles.selectedPaymentOptionText]}>
-                    UPI
-                  </Text>
-                </TouchableOpacity>
-              </View></TouchableOpacity>
+              <TouchableOpacity style={{ zIndex: 200000 }} onPress={() => {
+                navigation.navigate('Payment');
+              }}>  <View style={styles.paymentOptions}>
+                  <TouchableOpacity
+                    style={[styles.paymentOption, selectedPayment === 'cash' && styles.selectedPaymentOption]}
+                    onPress={() => {
+                      setSelectedPayment('cash'); navigation.navigate('Payment');
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="cash" size={20} color={selectedPayment === 'cash' ? '#4CAF50' : '#666'} />
+                    <Text style={[styles.paymentOptionText, selectedPayment === 'cash' && styles.selectedPaymentOptionText]}>
+                      Cash
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.paymentOption, selectedPayment === 'card' && styles.selectedPaymentOption]}
+                    onPress={() => {
+                      navigation.navigate('Payment');
+                      setSelectedPayment('card')
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="card" size={20} color={selectedPayment === 'card' ? '#4CAF50' : '#666'} />
+                    <Text style={[styles.paymentOptionText, selectedPayment === 'card' && styles.selectedPaymentOptionText]}>
+                      Card
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.paymentOption, selectedPayment === 'upi' && styles.selectedPaymentOption]}
+                    onPress={() => { navigation.navigate('Payment');; setSelectedPayment('upi') }}
+                    activeOpacity={0.7}
+                  >
+                    <FontAwesome name="mobile" size={22} color={selectedPayment === 'upi' ? '#4CAF50' : '#666'} />
+                    <Text style={[styles.paymentOptionText, selectedPayment === 'upi' && styles.selectedPaymentOptionText]}>
+                      UPI
+                    </Text>
+                  </TouchableOpacity>
+                </View></TouchableOpacity>
             </View>
-            
+
             {/* Driver Progress */}
             {animatingDriver && (
               <View style={styles.driverProgressSection}>
@@ -1095,11 +1115,11 @@ setSelectedPayment('card')}}
                 </View>
                 <View style={styles.progressBarContainer}>
                   <View style={styles.progressBarBackground}>
-                    <View 
+                    <View
                       style={[
                         styles.progressBarFill,
                         { width: `${animationProgress}%` }
-                      ]} 
+                      ]}
                     />
                   </View>
                   <View style={styles.progressBarLabels}>
@@ -1108,7 +1128,7 @@ setSelectedPayment('card')}}
                   </View>
                 </View>
                 <Text style={styles.driverProgressText}>
-                  {driverArrived 
+                  {driverArrived
                     ? `${animatingDriver.name} is waiting for you at the pickup location`
                     : `${animatingDriver.name} is ${(100 - animationProgress) > 50 ? 'on the way' : 'almost here'} (${animationProgress}%)`
                   }
@@ -1116,75 +1136,75 @@ setSelectedPayment('card')}}
               </View>
             )}
           </View>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.trackButton}
             onPress={() => navigation.navigate('RideStatus', {
-    driver: rideInfo?.driver,
-    rideDetails: rideInfo
-  })}
+              driver: rideInfo?.driver,
+              rideDetails: rideInfo
+            })}
             activeOpacity={0.8}
           >
             <Ionicons name="navigate" size={20} color="#fff" />
             <Text style={styles.trackButtonText}>Track Ride</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-  style={{
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 12,
-    marginBottom:20,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3
-  }}
-  onPress={() => navigation.navigate('Rating', {
-    driver: rideInfo?.driver,
-    rideDetails: rideInfo
-  })}
-  activeOpacity={0.7}
->
-  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-    <View style={{
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: '#FFF8E1',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginRight: 12
-    }}>
-      <Ionicons name="star" size={22} color="#FFB300" />
-    </View>
-    <View style={{ flex: 1 }}>
-      <Text style={{
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#333',
-        marginBottom: 4
-      }}>
-        Rate your experience
-      </Text>
-      <Text style={{
-        fontSize: 13,
-        color: '#666'
-      }}>
-        Help us improve by rating your ride with {rideInfo?.driver?.name || 'driver'}
-      </Text>
-    </View>
-    <Ionicons name="chevron-forward" size={20} color="#999" />
-  </View>
-</TouchableOpacity>
+          <TouchableOpacity
+            style={{
+              backgroundColor: 'white',
+              padding: 16,
+              borderRadius: 12,
+              marginTop: 12,
+              marginBottom: 20,
+              borderWidth: 1,
+              borderColor: '#E0E0E0',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 3
+            }}
+            onPress={() => navigation.navigate('Rating', {
+              driver: rideInfo?.driver,
+              rideDetails: rideInfo
+            })}
+            activeOpacity={0.7}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: '#FFF8E1',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginRight: 12
+              }}>
+                <Ionicons name="star" size={22} color="#FFB300" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{
+                  fontSize: 15,
+                  fontWeight: '600',
+                  color: '#333',
+                  marginBottom: 4
+                }}>
+                  Rate your experience
+                </Text>
+                <Text style={{
+                  fontSize: 13,
+                  color: '#666'
+                }}>
+                  Help us improve by rating your ride with {rideInfo?.driver?.name || 'driver'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#999" />
+            </View>
+          </TouchableOpacity>
         </View>
       ) : (
         <>
           {!destination && showPickupCard && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.pickupCard}
               onPress={handleChangePickup}
               activeOpacity={0.8}
@@ -1205,8 +1225,8 @@ setSelectedPayment('card')}}
               <Ionicons name="chevron-forward" size={20} color="#999" />
             </TouchableOpacity>
           )}
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.destinationCard}
             onPress={handleChangeDestination}
             activeOpacity={0.8}
@@ -1227,7 +1247,7 @@ setSelectedPayment('card')}}
             </View>
             <Ionicons name="chevron-forward" size={20} color="#999" />
           </TouchableOpacity>
-          
+
           {!destination && (
             <View style={styles.recentTripsSection}>
               <Text style={styles.sectionTitle}>Recent Trips</Text>
@@ -1238,7 +1258,7 @@ setSelectedPayment('card')}}
               </View>
             </View>
           )}
-          
+
           {destination && !selectedDriver && (
             <>
               <View style={styles.fareEstimateCard}>
@@ -1261,7 +1281,7 @@ setSelectedPayment('card')}}
                   </View>
                 </View>
               </View>
-              
+
               <View style={styles.availableRidesHeader}>
                 <View style={styles.availableRidesTitleContainer}>
                   <Text style={styles.availableRidesTitle}>Available Rides</Text>
@@ -1269,7 +1289,7 @@ setSelectedPayment('card')}}
                     <Text style={styles.driverCount}>{nearbyDrivers.length}</Text>
                   </View>
                 </View>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => focusCameraOnPickup()}
                   style={styles.viewOnMapButton}
                 >
@@ -1277,19 +1297,19 @@ setSelectedPayment('card')}}
                   <Text style={styles.viewOnMapText}>View Pickup</Text>
                 </TouchableOpacity>
               </View>
-              
+
               <View style={styles.driversList}>
                 {nearbyDrivers.map((driver) => (
-                  <DriverItem 
-                    key={driver.id} 
-                    driver={driver} 
+                  <DriverItem
+                    key={driver.id}
+                    driver={driver}
                     isSelected={selectedDriver?.id === driver.id}
                   />
                 ))}
               </View>
             </>
           )}
-          
+
           {selectedDriver && destination && !bookingConfirmed && (
             <>
               <View style={styles.selectedDriverCard}>
@@ -1307,14 +1327,14 @@ setSelectedPayment('card')}}
                       </View>
                     </View>
                   </View>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={() => setSelectedDriver(null)}
                     style={styles.unselectButton}
                   >
                     <Ionicons name="close" size={24} color="#999" />
                   </TouchableOpacity>
                 </View>
-                
+
                 <View style={styles.selectedDriverDetails}>
                   <View style={styles.detailRow}>
                     <View style={styles.detailIcon}>
@@ -1338,8 +1358,8 @@ setSelectedPayment('card')}}
                     <Text style={styles.detailValue}>{selectedDriver.availableSeats}</Text>
                   </View>
                 </View>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={styles.bookButton}
                   onPress={handleBookRide}
                   activeOpacity={0.8}
@@ -1399,7 +1419,7 @@ setSelectedPayment('card')}}
 
           {/* Pickup Location Overlay */}
           {showPickupCard && !destination && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.pickupOverlay}
               onPress={handleChangePickup}
               activeOpacity={0.8}
@@ -1422,7 +1442,7 @@ setSelectedPayment('card')}}
           )}
 
           {/* Current Location Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.currentLocationButton}
             onPress={() => {
               getCurrentLocation();
@@ -1462,12 +1482,12 @@ setSelectedPayment('card')}}
 };
 
 // Separate SearchModal Component with its own state
-const SearchModal = ({ searchMode, currentLocation, onClose, onSelectLocation }) => {
+const SearchModal = ({ searchMode, currentLocation, onClose, onSelectLocation }: any) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const searchInputRef = useRef(null);
-  const searchTimeoutRef = useRef(null);
+  const searchInputRef = useRef<any>(null);
+  const searchTimeoutRef = useRef<any>(null);
 
   // Previous destinations
   const [previousDestinations] = useState([
@@ -1499,7 +1519,7 @@ const SearchModal = ({ searchMode, currentLocation, onClose, onSelectLocation })
     const timer = setTimeout(() => {
       searchInputRef.current?.focus();
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -1508,9 +1528,9 @@ const SearchModal = ({ searchMode, currentLocation, onClose, onSelectLocation })
       setSearchResults([]);
       return;
     }
-    
+
     setIsSearching(true);
-    
+
     try {
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?` +
@@ -1518,9 +1538,9 @@ const SearchModal = ({ searchMode, currentLocation, onClose, onSelectLocation })
         `access_token=${MAPBOX_ACCESS_TOKEN}&limit=8`
       );
       const data = await response.json();
-      
+
       if (data.features) {
-        const results = data.features.map(feature => ({
+        const results = data.features.map((feature: any) => ({
           id: feature.id,
           name: feature.text,
           address: feature.place_name,
@@ -1558,7 +1578,7 @@ const SearchModal = ({ searchMode, currentLocation, onClose, onSelectLocation })
     }
   };
 
-  const handleSearchChange = (text) => {
+  const handleSearchChange = (text: any) => {
     setSearchQuery(text);
     clearTimeout(searchTimeoutRef.current);
     searchTimeoutRef.current = setTimeout(() => {
@@ -1566,13 +1586,13 @@ const SearchModal = ({ searchMode, currentLocation, onClose, onSelectLocation })
     }, 500);
   };
 
-  const handleLocationSelect = (location) => {
+  const handleLocationSelect = (location: any) => {
     onSelectLocation(location);
     onClose();
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.searchViewContainer}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
@@ -1580,7 +1600,7 @@ const SearchModal = ({ searchMode, currentLocation, onClose, onSelectLocation })
       <View style={styles.searchViewContent}>
         {/* Header */}
         <View style={styles.searchViewHeader}>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={onClose}
             style={styles.searchViewBackButton}
             activeOpacity={0.7}
@@ -1601,8 +1621,8 @@ const SearchModal = ({ searchMode, currentLocation, onClose, onSelectLocation })
               ref={searchInputRef}
               style={styles.searchViewInput}
               placeholder={
-                searchMode === 'pickup' 
-                  ? 'Search for pickup location...' 
+                searchMode === 'pickup'
+                  ? 'Search for pickup location...'
                   : 'Search destination...'
               }
               placeholderTextColor="#999"
@@ -1616,7 +1636,7 @@ const SearchModal = ({ searchMode, currentLocation, onClose, onSelectLocation })
               blurOnSubmit={false}
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setSearchQuery('')}
                 style={styles.searchViewClearButton}
                 activeOpacity={0.7}
@@ -1628,7 +1648,7 @@ const SearchModal = ({ searchMode, currentLocation, onClose, onSelectLocation })
         </View>
 
         {/* Current Location Option */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.searchViewCurrentLocation}
           onPress={() => {
             const location = {
@@ -1668,23 +1688,23 @@ const SearchModal = ({ searchMode, currentLocation, onClose, onSelectLocation })
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
-              searchResults.length === 0 && searchQuery.length === 0 && (
+              searchResults.length === 0 && searchQuery.length === 0 ? (
                 <Text style={styles.searchViewPreviousTitle}>
                   {searchMode === 'pickup' ? 'Recent Locations' : 'Previous Destinations'}
                 </Text>
-              )
+              ) : null
             }
             renderItem={({ item }) => (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.searchViewResultItem}
                 onPress={() => handleLocationSelect(item)}
                 activeOpacity={0.7}
               >
                 <View style={styles.searchViewResultIcon}>
-                  <Ionicons 
-                    name={searchResults.length > 0 ? "location-outline" : "time-outline"} 
-                    size={20} 
-                    color="#666" 
+                  <Ionicons
+                    name={searchResults.length > 0 ? "location-outline" : "time-outline"}
+                    size={20}
+                    color="#666"
                   />
                 </View>
                 <View style={styles.searchViewResultTexts}>
@@ -2182,13 +2202,13 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     fontWeight: '400',
   },
-  destinationAddress: {
-    fontSize: 15,
-    color: '#333',
-    marginTop: 4,
-    fontWeight: '500',
-    lineHeight: 20,
-  },
+  // destinationAddress: {
+  //   fontSize: 15,
+  //   color: '#333',
+  //   marginTop: 4,
+  //   fontWeight: '500',
+  //   lineHeight: 20,
+  // },
   // Recent Trips
   recentTripsSection: {
     marginBottom: 20,
