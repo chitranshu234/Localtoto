@@ -93,10 +93,13 @@ const OTPScreen = ({ navigation }: any) => {
     };
 
     const handleVerify = () => {
+        if (!isComplete) return;
+        
         const otpCode = otp.join('');
         console.log('Verifying OTP:', otpCode);
-        // Navigate to next screen
-        // navigation.navigate('Location');
+        
+        // Navigate to Map screen
+        navigation.navigate('Map');
     };
 
     const handleResend = () => {
@@ -177,15 +180,17 @@ const OTPScreen = ({ navigation }: any) => {
                 </View>
 
                 {/* Verify Button */}
-                <Button
-                    title="Verify"
-                    onPress={isComplete ? handleVerify : () => { }}
-                    variant="primary"
-                    style={{
-                        ...styles.verifyButton,
-                        opacity: isComplete ? 1 : 0.5,
-                    }}
-                />
+                <TouchableOpacity
+                    style={[
+                        styles.verifyButton,
+                        isComplete ? styles.verifyButtonActive : styles.verifyButtonInactive,
+                    ]}
+                    onPress={handleVerify}
+                    disabled={!isComplete}
+                    activeOpacity={0.8}
+                >
+                    <Text style={styles.verifyButtonText}>Verify</Text>
+                </TouchableOpacity>
             </View>
         </SafeAreaView>
     );
@@ -296,8 +301,23 @@ const styles = StyleSheet.create({
     },
     verifyButton: {
         width: width - 60,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
         marginTop: 'auto',
         marginBottom: 30,
+    },
+    verifyButtonActive: {
+        backgroundColor: '#2D7C4F',
+    },
+    verifyButtonInactive: {
+        backgroundColor: '#E0E0E0',
+    },
+    verifyButtonText: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#FFFFFF',
     },
 });
 

@@ -1,13 +1,50 @@
-import React from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import AppNavigator from './src/navigation/AppNavigator';
+/**
+ * Sample React Native App
+ * https://github.com/facebook/react-native
+ *
+ * @format
+ */
 
-function App(): React.JSX.Element {
+import { NewAppScreen } from '@react-native/new-app-screen';
+import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
+import { WebView } from 'react-native-webview';
+
+import MainNavigation from './src/navigation/MainNavigation';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+function App() {
+  const isDarkMode = useColorScheme() === 'dark';
+  const html = `
+  <html>
+    <head>
+      <script src="https://cdn.olamaps.io/map/olamaps.js"></script>
+    </head>
+    <body>
+      <div id="map" style="width:100%;height:100%"></div>
+      <script>
+        const map = OLMAP.createMap("map", {
+          center: [12.97, 77.59],
+          zoom: 12
+        });
+      </script>
+    </body>
+  </html>`;
   return (
     <SafeAreaProvider>
-      <AppNavigator />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+     <GestureHandlerRootView style={{flex:1}}><MainNavigation/></GestureHandlerRootView>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
 
 export default App;

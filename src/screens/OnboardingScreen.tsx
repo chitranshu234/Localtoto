@@ -103,6 +103,7 @@ const OnboardingScreen = () => {
         }
     };
 
+
     const renderItem = ({ item }: { item: typeof slides[0] }) => {
         if (item.type === 'location') {
             // Location slide with buttons
