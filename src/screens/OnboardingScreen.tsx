@@ -15,6 +15,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Pagination from '../components/Pagination';
 import Button from '../components/Button';
+import LocationService from '../services/LocationService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -64,7 +65,35 @@ const OnboardingScreen = () => {
         setCurrentIndex(index);
     };
 
-    const handleOnboardingComplete = async () => {
+    const handleUseCurrentLocation = async () => {
+        // Request location permission (Ola/Uber style - on first launch)
+        const granted = await LocationService.requestPermission();
+
+        if (granted) {
+            // Permission granted, save onboarding and navigate
+            try {
+                await AsyncStorage.setItem('@localtoto_onboarding_completed', 'true');
+                navigation.navigate('Search');
+            } catch (error) {
+                console.error('Error saving onboarding status:', error);
+                navigation.navigate('Search');
+            }
+        } else {
+            // Permission denied, but still save onboarding and navigate
+            // SearchScreen will handle permission request again later
+            LocationService.showPermissionDeniedAlert();
+            try {
+                await AsyncStorage.setItem('@localtoto_onboarding_completed', 'true');
+                navigation.navigate('Search');
+            } catch (error) {
+                console.error('Error saving onboarding status:', error);
+                navigation.navigate('Search');
+            }
+        }
+    };
+
+    const handleSelectManually = async () => {
+        // Skip location permission for now, will be asked on SearchScreen
         try {
             await AsyncStorage.setItem('@localtoto_onboarding_completed', 'true');
             navigation.navigate('Search');
@@ -96,13 +125,13 @@ const OnboardingScreen = () => {
                     <View style={styles.buttonContainer}>
                         <Button
                             title="Use current location"
-                            onPress={handleOnboardingComplete}
+                            onPress={handleUseCurrentLocation}
                             variant="primary"
                             style={styles.primaryBtn}
                         />
                         <Button
                             title="Select it manually"
-                            onPress={handleOnboardingComplete}
+                            onPress={handleSelectManually}
                             variant="secondary"
                             style={styles.secondaryBtn}
                         />
