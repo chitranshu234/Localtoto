@@ -324,6 +324,16 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginRight: 12,
     },
+    resultTitle: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#333",
+        marginBottom: 2,
+    },
+    resultAddress: {
+        fontSize: 13,
+        color: "#777",
+    },
 
     /* BOTTOM TABS */
     bottomTabs: {

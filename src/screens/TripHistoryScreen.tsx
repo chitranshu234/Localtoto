@@ -10,10 +10,10 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-const TripHistoryScreen = ({ navigation }) => {
-  const [expandedTrip, setExpandedTrip] = useState(null);
+const TripHistoryScreen = ({ navigation }: any) => {
+  const [expandedTrip, setExpandedTrip] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("rides"); // Current tab state
-const insets=useSafeAreaInsets()
+  const insets = useSafeAreaInsets()
 
   const trips = [
     {
@@ -74,14 +74,14 @@ const insets=useSafeAreaInsets()
     },
   ];
 
-  const toggleTrip = (tripId) => {
+  const toggleTrip = (tripId: number) => {
     setExpandedTrip(expandedTrip === tripId ? null : tripId);
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#1a7f4a" />
-      
+
       {/* MAIN CONTENT */}
       <View style={styles.container}>
         {/* Header */}
@@ -100,8 +100,8 @@ const insets=useSafeAreaInsets()
         </View>
 
         {/* Content */}
-        <ScrollView 
-          style={styles.content} 
+        <ScrollView
+          style={styles.content}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 80 }}
         >
@@ -200,7 +200,7 @@ const insets=useSafeAreaInsets()
       </View>
 
       {/* BOTTOM TABS */}
-      <View style={[styles.bottomTabs,{paddingBottom:insets?.bottom}]}>
+      <View style={[styles.bottomTabs, { paddingBottom: insets?.bottom }]}>
         {/* HOME */}
         <TouchableOpacity
           style={styles.tab}

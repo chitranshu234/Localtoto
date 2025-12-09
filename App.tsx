@@ -14,7 +14,7 @@ import {
 } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
-import MainNavigation from './src/navigation/MainNavigation';
+import AppNavigator from './src/navigation/AppNavigator';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -36,7 +36,7 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-     <GestureHandlerRootView style={{flex:1}}><MainNavigation/></GestureHandlerRootView>
+      <GestureHandlerRootView style={{ flex: 1 }}><AppNavigator /></GestureHandlerRootView>
     </SafeAreaProvider>
   );
 }
