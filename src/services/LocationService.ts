@@ -69,7 +69,14 @@ class LocationService {
     /**
      * Get current location coordinates with better error handling
      */
-    static async getCurrentLocation(): Promise<{ latitude: number; longitude: number } | null> {
+    static async getCurrentLocation(): Promise<{
+        latitude: number;
+        longitude: number;
+        accuracy?: number | null;
+        altitude?: number | null;
+        heading?: number | null;
+        speed?: number | null;
+    } | null> {
         try {
             const hasPermission = await this.checkPermission();
 
@@ -185,8 +192,8 @@ class LocationService {
                 'Please enable location access in Settings to find nearby drivers.',
                 [
                     { text: 'Cancel', style: 'cancel' },
-                    { 
-                        text: 'Open Settings', 
+                    {
+                        text: 'Open Settings',
                         onPress: () => {
                             // For iOS, you might want to open app settings
                             if (Platform.OS === 'ios') {
@@ -234,14 +241,14 @@ class LocationService {
                 if (location) {
                     return location;
                 }
-                
+
                 // Wait before retrying (exponential backoff)
                 await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
             } catch (error) {
                 console.warn(`Location attempt ${i + 1} failed:`, error);
             }
         }
-        
+
         console.error('Failed to get location after', maxRetries, 'attempts');
         return null;
     }

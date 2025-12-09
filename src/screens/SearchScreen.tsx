@@ -28,7 +28,14 @@ const SearchScreen = ({ navigation, route }: any) => {
     const [pickupQuery, setPickupQuery] = useState('');
     const [dropQuery, setDropQuery] = useState('');
     const [activeInput, setActiveInput] = useState(route?.params?.type || 'drop');
-    const [currentLocation, setCurrentLocation] = useState(null);
+    const [currentLocation, setCurrentLocation] = useState<{
+        latitude: number;
+        longitude: number;
+        accuracy?: number | null;
+        altitude?: number | null;
+        heading?: number | null;
+        speed?: number | null;
+    } | null>(null);
     const [activeTab, setActiveTab] = useState("home"); // 👈 NEW (Current tab state)
 
     useEffect(() => {
@@ -91,9 +98,9 @@ const SearchScreen = ({ navigation, route }: any) => {
             </TouchableOpacity>
         </TouchableOpacity>
     );
-const insets=useSafeAreaInsets()
+    const insets = useSafeAreaInsets()
     return (
-        <SafeAreaView style={styles.safeArea}>  
+        <SafeAreaView style={styles.safeArea}>
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
 
             {/* MAIN CONTENT */}
@@ -145,61 +152,61 @@ const insets=useSafeAreaInsets()
             </View>
 
             {/* BOTTOM TABS */}
-          {/* BOTTOM TABS */}
-<View style={[styles.bottomTabs,{paddingBottom:insets?.bottom}]}>
+            {/* BOTTOM TABS */}
+            <View style={[styles.bottomTabs, { paddingBottom: insets?.bottom }]}>
 
-    {/* HOME */}
-    <TouchableOpacity
-        style={styles.tab}
-        onPress={() => navigation.navigate("SearchScreen")}  // or any home screen
-    >
-        <Icon
-            name="home"
-            size={22}
-            color={activeTab === "home" ? "#2D7C4F" : "#777"}
-        />
-        <Text style={[styles.tabText, activeTab === "home" && styles.activeTabText]}>
-            Home
-        </Text>
-    </TouchableOpacity>
+                {/* HOME */}
+                <TouchableOpacity
+                    style={styles.tab}
+                    onPress={() => navigation.navigate("SearchScreen")}  // or any home screen
+                >
+                    <Icon
+                        name="home"
+                        size={22}
+                        color={activeTab === "home" ? "#2D7C4F" : "#777"}
+                    />
+                    <Text style={[styles.tabText, activeTab === "home" && styles.activeTabText]}>
+                        Home
+                    </Text>
+                </TouchableOpacity>
 
-    {/* RIDES -> TripHistory */}
-    <TouchableOpacity
-        style={styles.tab}
-        onPress={() => {
-            setActiveTab("rides");
-            navigation.navigate("TripHistory");
-        }}
-    >
-        <Icon
-            name="car"
-            size={22}
-            color={activeTab === "rides" ? "#2D7C4F" : "#777"}
-        />
-        <Text style={[styles.tabText, activeTab === "rides" && styles.activeTabText]}>
-            Rides
-        </Text>
-    </TouchableOpacity>
+                {/* RIDES -> TripHistory */}
+                <TouchableOpacity
+                    style={styles.tab}
+                    onPress={() => {
+                        setActiveTab("rides");
+                        navigation.navigate("TripHistory");
+                    }}
+                >
+                    <Icon
+                        name="car"
+                        size={22}
+                        color={activeTab === "rides" ? "#2D7C4F" : "#777"}
+                    />
+                    <Text style={[styles.tabText, activeTab === "rides" && styles.activeTabText]}>
+                        Rides
+                    </Text>
+                </TouchableOpacity>
 
-    {/* PROFILE */}
-    <TouchableOpacity
-        style={styles.tab}
-        onPress={() => {
-            setActiveTab("profile");
-            navigation.navigate("Profile");
-        }}
-    >
-        <Icon
-            name="user"
-            size={22}
-            color={activeTab === "profile" ? "#2D7C4F" : "#777"}
-        />
-        <Text style={[styles.tabText, activeTab === "profile" && styles.activeTabText]}>
-            Profile
-        </Text>
-    </TouchableOpacity>
+                {/* PROFILE */}
+                <TouchableOpacity
+                    style={styles.tab}
+                    onPress={() => {
+                        setActiveTab("profile");
+                        navigation.navigate("Profile");
+                    }}
+                >
+                    <Icon
+                        name="user"
+                        size={22}
+                        color={activeTab === "profile" ? "#2D7C4F" : "#777"}
+                    />
+                    <Text style={[styles.tabText, activeTab === "profile" && styles.activeTabText]}>
+                        Profile
+                    </Text>
+                </TouchableOpacity>
 
-</View>
+            </View>
 
 
         </SafeAreaView>
@@ -325,10 +332,10 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         backgroundColor: "#FFF",
         borderTopWidth: 1,
-        borderTopColor: "#EEE",  position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+        borderTopColor: "#EEE", position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
     },
     tab: {
         alignItems: "center",
