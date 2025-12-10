@@ -9,8 +9,10 @@ import {
     ScrollView,
     TextInput,
     Alert,
+    Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { launchImageLibrary } from 'react-native-image-picker';
 import Button from '../components/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/api/auth';
@@ -20,13 +22,45 @@ const EditProfileScreen = ({ navigation }: any) => {
     const [name, setName] = useState(user?.name || '');
     const [phone, setPhone] = useState(user?.phone || '');
     const [email, setEmail] = useState(user?.email || '');
+    const [profileImage, setProfileImage] = useState(user?.profileImage || null);
+    const [newImage, setNewImage] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
+
+    const handleImagePick = async () => {
+        const result = await launchImageLibrary({
+            mediaType: 'photo',
+            quality: 0.8,
+            selectionLimit: 1,
+        });
+
+        if (result.assets && result.assets.length > 0) {
+            const asset = result.assets[0];
+            setNewImage(asset);
+            setProfileImage(asset.uri || null);
+        }
+    };
 
     const handleSave = async () => {
         setIsLoading(true);
         try {
-            console.log('Saving profile:', { name, email });
-            await authService.updateProfile({ name, email });
+            console.log('Saving profile:', { name, email, newImage });
+
+            let data: any;
+            if (newImage) {
+                const formData = new FormData();
+                formData.append('name', name);
+                formData.append('email', email);
+                formData.append('profile_image', {
+                    uri: newImage.uri,
+                    type: newImage.type,
+                    name: newImage.fileName || 'profile.jpg',
+                });
+                data = formData;
+            } else {
+                data = { name, email };
+            }
+
+            await authService.updateProfile(data);
             await updateProfile(); // Refresh local user state
             Alert.alert('Success', 'Profile updated successfully');
             navigation.goBack();
@@ -55,11 +89,15 @@ const EditProfileScreen = ({ navigation }: any) => {
                 <View style={styles.profileSection}>
                     <View style={styles.avatarContainer}>
                         <View style={styles.avatarCircle}>
-                            <Text style={styles.avatarText}>
-                                {name ? name.charAt(0).toUpperCase() : 'U'}
-                            </Text>
+                            {profileImage ? (
+                                <Image source={{ uri: profileImage }} style={styles.avatarImage} />
+                            ) : (
+                                <Text style={styles.avatarText}>
+                                    {name ? name.charAt(0).toUpperCase() : 'U'}
+                                </Text>
+                            )}
                         </View>
-                        <TouchableOpacity style={styles.cameraButton}>
+                        <TouchableOpacity style={styles.cameraButton} onPress={handleImagePick}>
                             <Icon name="camera" size={16} color="#FFFFFF" />
                         </TouchableOpacity>
                     </View>
@@ -178,6 +216,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#D1F2EB',
         justifyContent: 'center',
         alignItems: 'center',
+        overflow: 'hidden',
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
     },
     avatarText: {
         fontSize: 40,

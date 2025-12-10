@@ -16,8 +16,11 @@ export const authService = {
         return response.data;
     },
 
-    updateProfile: async (data: Partial<User>): Promise<User> => {
-        const response = await client.patch('/users/profile', data);
+    updateProfile: async (data: Partial<User> | FormData): Promise<User> => {
+        const isFormData = data instanceof FormData;
+        const response = await client.patch('/users/profile', data, {
+            headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
+        });
         return response.data;
     },
 };

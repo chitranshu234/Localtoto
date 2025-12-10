@@ -7,6 +7,7 @@ import {
     SafeAreaView,
     StatusBar,
     ScrollView,
+    Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useAuth } from '../contexts/AuthContext';
@@ -46,9 +47,13 @@ const ProfileScreen = ({ navigation }: any) => {
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 <View style={styles.profileCard}>
                     <View style={styles.avatarCircle}>
-                        <Text style={styles.avatarText}>
-                            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                        </Text>
+                        {user?.profileImage ? (
+                            <Image source={{ uri: user.profileImage }} style={styles.avatarImage} />
+                        ) : (
+                            <Text style={styles.avatarText}>
+                                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                            </Text>
+                        )}
                     </View>
                     <Text style={styles.userName}>{user?.name || 'User'}</Text>
                     <Text style={styles.userPhone}>{user?.phone || ''}</Text>
@@ -137,6 +142,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 15,
+        overflow: 'hidden',
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
     },
     avatarText: {
         fontSize: 36,
