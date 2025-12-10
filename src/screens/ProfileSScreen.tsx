@@ -9,7 +9,11 @@ import {
     ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { useAuth } from '../contexts/AuthContext';
+
 const ProfileScreen = ({ navigation }: any) => {
+    const { user, logout } = useAuth();
+
     const menuItems = [
         { id: '1', title: 'My Rides', icon: 'car', action: () => console.log('My Rides') },
         { id: '2', title: 'Saved Locations', icon: 'map-marker', action: () => console.log('Saved Locations') },
@@ -17,9 +21,12 @@ const ProfileScreen = ({ navigation }: any) => {
         { id: '4', title: 'Help & Support', icon: 'question-circle', action: () => console.log('Help & Support') },
         { id: '5', title: 'Settings', icon: 'cog', action: () => console.log('Settings') },
     ];
-    const handleLogout = () => {
+
+    const handleLogout = async () => {
         console.log('Logging out...');
+        await logout();
     };
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#2D7C4F" />
@@ -39,10 +46,12 @@ const ProfileScreen = ({ navigation }: any) => {
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 <View style={styles.profileCard}>
                     <View style={styles.avatarCircle}>
-                        <Text style={styles.avatarText}>JD</Text>
+                        <Text style={styles.avatarText}>
+                            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                        </Text>
                     </View>
-                    <Text style={styles.userName}>John Doe</Text>
-                    <Text style={styles.userPhone}>+91 98765 43210</Text>
+                    <Text style={styles.userName}>{user?.name || 'User'}</Text>
+                    <Text style={styles.userPhone}>{user?.phone || ''}</Text>
                     <TouchableOpacity
                         style={styles.editButton}
                         onPress={() => navigation.navigate('EditProfile')}
@@ -75,6 +84,7 @@ const ProfileScreen = ({ navigation }: any) => {
         </View>
     );
 };
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -215,4 +225,5 @@ const styles = StyleSheet.create({
         marginBottom: 30,
     },
 });
+
 export default ProfileScreen;

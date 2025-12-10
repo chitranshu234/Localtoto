@@ -9,13 +9,16 @@ import {
     StatusBar,
     Dimensions,
     Platform,
+    Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Button from '../components/Button';
+import { useAuth } from '../contexts/AuthContext';
 
 const { width } = Dimensions.get('window');
 
-const OTPScreen = ({ navigation }: any) => {
+const OTPScreen = ({ navigation, route }: any) => {
+    const { login } = useAuth();
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [timer, setTimer] = useState(60);
     const inputRefs = useRef<(TextInput | null)[]>([]);
@@ -43,19 +46,19 @@ const OTPScreen = ({ navigation }: any) => {
     const handleOtpChange = (value: string, index: number) => {
         // Extract only numbers
         const numericValue = value.replace(/[^0-9]/g, '');
-        
+
         // If nothing numeric, don't update at all
         if (value.length > 0 && numericValue.length === 0) {
             return;
         }
 
         const newOtp = [...otp];
-        
+
         // Take only the last digit
         if (numericValue.length > 0) {
             newOtp[index] = numericValue.slice(-1);
             setOtp(newOtp);
-            
+
             // Move to next box
             if (index < 5) {
                 inputRefs.current[index + 1]?.focus();
@@ -64,7 +67,7 @@ const OTPScreen = ({ navigation }: any) => {
             // Empty value - this is a delete/backspace
             newOtp[index] = '';
             setOtp(newOtp);
-            
+
             // Move to previous box
             if (index > 0) {
                 inputRefs.current[index - 1]?.focus();
@@ -92,14 +95,22 @@ const OTPScreen = ({ navigation }: any) => {
         }
     };
 
-    const handleVerify = () => {
+    const handleVerify = async () => {
         if (!isComplete) return;
-        
+
         const otpCode = otp.join('');
         console.log('Verifying OTP:', otpCode);
-        
-        // Navigate to Map screen
-        navigation.navigate('Map');
+
+        try {
+            // Get phone number from params
+            const phoneNumber = route.params?.phone || '+919876543210'; // Fallback for dev
+            await login(phoneNumber, otpCode);
+            // Navigation is handled by AuthContext state change or we can force it here
+            // navigation.navigate('Map'); 
+        } catch (error) {
+            console.error('Verification failed:', error);
+            Alert.alert('Error', 'Invalid OTP. Please try again.');
+        }
     };
 
     const handleResend = () => {

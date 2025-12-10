@@ -8,17 +8,36 @@ import {
     StatusBar,
     ScrollView,
     TextInput,
+    Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Button from '../components/Button';
+import { useAuth } from '../contexts/AuthContext';
+import { authService } from '../services/api/auth';
+
 const EditProfileScreen = ({ navigation }: any) => {
-    const [name, setName] = useState('John Doe');
-    const [phone, setPhone] = useState('+91 98765 43210');
-    const [email, setEmail] = useState('johndoe@example.com');
-    const handleSave = () => {
-        console.log('Profile saved:', { name, phone, email });
-        navigation.goBack();
+    const { user, updateProfile } = useAuth();
+    const [name, setName] = useState(user?.name || '');
+    const [phone, setPhone] = useState(user?.phone || '');
+    const [email, setEmail] = useState(user?.email || '');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleSave = async () => {
+        setIsLoading(true);
+        try {
+            console.log('Saving profile:', { name, email });
+            await authService.updateProfile({ name, email });
+            await updateProfile(); // Refresh local user state
+            Alert.alert('Success', 'Profile updated successfully');
+            navigation.goBack();
+        } catch (error) {
+            console.error('Failed to update profile:', error);
+            Alert.alert('Error', 'Failed to update profile');
+        } finally {
+            setIsLoading(false);
+        }
     };
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#2D7C4F" />
@@ -36,9 +55,11 @@ const EditProfileScreen = ({ navigation }: any) => {
                 <View style={styles.profileSection}>
                     <View style={styles.avatarContainer}>
                         <View style={styles.avatarCircle}>
-                            <Text style={styles.avatarText}>JD</Text>
+                            <Text style={styles.avatarText}>
+                                {name ? name.charAt(0).toUpperCase() : 'U'}
+                            </Text>
                         </View>
-                       <TouchableOpacity style={styles.cameraButton}>
+                        <TouchableOpacity style={styles.cameraButton}>
                             <Icon name="camera" size={16} color="#FFFFFF" />
                         </TouchableOpacity>
                     </View>
@@ -53,7 +74,7 @@ const EditProfileScreen = ({ navigation }: any) => {
                                 style={styles.input}
                                 value={name}
                                 onChangeText={setName}
-                                placeholder="Enter your  name"
+                                placeholder="Enter your name"
                                 placeholderTextColor="#999"
                             />
                         </View>
@@ -63,9 +84,9 @@ const EditProfileScreen = ({ navigation }: any) => {
                         <View style={styles.inputContainer}>
                             <Icon name="phone" size={18} color="#666" style={styles.inputIcon} />
                             <TextInput
-                                style={styles.input}
+                                style={[styles.input, styles.disabledInput]}
                                 value={phone}
-                                onChangeText={setPhone}
+                                editable={false}
                                 placeholder="Enter phone number"
                                 placeholderTextColor="#999"
                                 keyboardType="phone-pad"
@@ -90,15 +111,17 @@ const EditProfileScreen = ({ navigation }: any) => {
                 </View>
                 <View style={styles.buttonContainer}>
                     <Button
-                        title="Save Changes"
+                        title={isLoading ? "Saving..." : "Save Changes"}
                         onPress={handleSave}
                         variant="primary"
                         style={styles.saveButton}
+                        disabled={isLoading}
                     />
-                    
+
                     <TouchableOpacity
                         style={styles.cancelButton}
                         onPress={() => navigation.goBack()}
+                        disabled={isLoading}
                     >
                         <Text style={styles.cancelButtonText}>Cancel</Text>
                     </TouchableOpacity>
@@ -107,6 +130,7 @@ const EditProfileScreen = ({ navigation }: any) => {
         </View>
     );
 };
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -212,12 +236,18 @@ const styles = StyleSheet.create({
         color: '#333',
         fontWeight: '500',
     },
+    disabledInput: {
+        color: '#999',
+        backgroundColor: '#F0F0F0',
+    },
     buttonContainer: {
         paddingHorizontal: 20,
         paddingBottom: 30,
     },
     saveButton: {
         marginBottom: 12,
+        backgroundColor: '#2D7C4F', // Added Green Background
+        borderWidth: 0, // Removed white border
     },
     cancelButton: {
         borderWidth: 2,
@@ -230,7 +260,8 @@ const styles = StyleSheet.create({
     cancelButtonText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#666',
+        color: '#333', // Changed to dark grey for visibility
     },
 });
+
 export default EditProfileScreen;

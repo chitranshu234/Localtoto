@@ -11,29 +11,39 @@ import {
   StatusBar,
   Dimensions,
   Image,
+  Alert,
 } from 'react-native';
+import { authService } from '../services/api/auth';
 
 const { width } = Dimensions.get('window');
 
-const SignUpScreen = ({ navigation }) => {
+const SignUpScreen = ({ navigation }: any) => {
   const [phone, setPhone] = useState('');
 
-  const handleSendOTP = () => {
+  const handleSendOTP = async () => {
     if (phone.length === 10) {
-      console.log('Sending OTP to:', phone);
-      navigation?.navigate('OTP', { phone });
+      try {
+        console.log('Sending OTP to:', phone);
+        // Format phone number to E.164 if needed, assuming backend takes +91
+        const formattedPhone = `+91${phone}`;
+        await authService.sendOtp({ phoneNumber: formattedPhone });
+        navigation?.navigate('OTP', { phone: formattedPhone });
+      } catch (error) {
+        console.error('Failed to send OTP:', error);
+        Alert.alert('Error', 'Failed to send OTP. Please try again.');
+      }
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#219653" />
-      
+
       {/* Circle Background Effect - Same as Splash Screen */}
       <View style={styles.backgroundContainer}>
         {/* Top Left Circle - Darker Green */}
         <View style={styles.circle1} />
-        
+
         {/* Bottom Right Circle - Lighter Green */}
         <View style={styles.circle2} />
       </View>
@@ -57,7 +67,7 @@ const SignUpScreen = ({ navigation }) => {
             <View style={styles.labelContainer}>
               <Text style={styles.label}>Phone Number</Text>
             </View>
-            
+
             <View style={styles.mobileContainer}>
               <View style={styles.countryCode}>
                 <View style={styles.flag}>
@@ -79,7 +89,7 @@ const SignUpScreen = ({ navigation }) => {
               />
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.sendOtpBtn, phone.length < 10 && styles.sendOtpBtnDisabled]}
               onPress={handleSendOTP}
               disabled={phone.length < 10}
@@ -156,7 +166,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 5,
-    marginVertical:-20
+    marginVertical: -20
   },
   titleContainer: {
     marginBottom: 25,

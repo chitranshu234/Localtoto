@@ -16,6 +16,7 @@ import { WebView } from 'react-native-webview';
 
 import AppNavigator from './src/navigation/AppNavigator';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { AuthProvider } from './src/contexts/AuthContext';
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
   const html = `
@@ -36,7 +37,11 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <GestureHandlerRootView style={{ flex: 1 }}><AppNavigator /></GestureHandlerRootView>
+      <AuthProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <AppNavigator />
+        </GestureHandlerRootView>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }
