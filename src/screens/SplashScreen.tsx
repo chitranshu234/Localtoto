@@ -1,20 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Animated, StyleSheet, Dimensions, Easing } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-
-type RootStackParamList = {
-    Splash: undefined;
-    Onboarding: undefined;
-};
-
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Splash'>;
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
-const SplashScreen = () => {
-    const navigation = useNavigation<NavigationProp>();
+const ONBOARDING_COMPLETED_KEY = '@localtoto_onboarding_completed';
 
+const SplashScreen = ({ navigation }: any) => {
     // Animation Values
     const logoOpacity = useRef(new Animated.Value(0)).current;
     const logoScale = useRef(new Animated.Value(0.8)).current;
@@ -49,13 +41,31 @@ const SplashScreen = () => {
             }),
         ]).start();
 
-        // Navigate after 2.5 seconds
-        const timer = setTimeout(() => {
-            navigation.replace('Onboarding');
-        }, 2500);
+        // Navigate after animations complete
+        const checkOnboardingAndNavigate = async () => {
+            try {
+                const completed = await AsyncStorage.getItem(ONBOARDING_COMPLETED_KEY);
+                const isOnboardingCompleted = completed === 'true';
 
-        return () => clearTimeout(timer);
-    }, [navigation, logoOpacity, logoScale, circle1Scale, circle2Scale]);
+                // Wait for animations to finish (1.5 seconds)
+                setTimeout(() => {
+                    if (navigation) {
+                        navigation.replace(isOnboardingCompleted ? 'Search' : 'Onboarding');
+                    }
+                }, 1500);
+            } catch (error) {
+                console.error('Error checking onboarding status:', error);
+                // Default to onboarding if error
+                setTimeout(() => {
+                    if (navigation) {
+                        navigation.replace('Onboarding');
+                    }
+                }, 1500);
+            }
+        };
+
+        checkOnboardingAndNavigate();
+    }, [logoOpacity, logoScale, circle1Scale, circle2Scale, navigation]);
 
     return (
         <View style={styles.container}>

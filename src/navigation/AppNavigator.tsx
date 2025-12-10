@@ -28,29 +28,22 @@ export const routeNameRef = React.createRef<string>();
 
 const Stack = createNativeStackNavigator();
 
-// Storage keys
-const ONBOARDING_COMPLETED_KEY = '@localtoto_onboarding_completed';
+// Storage key for navigation persistence
 const PERSISTENCE_KEY = 'NAVIGATION_STATE_V1';
 
 const AppNavigator = () => {
-    const [isOnboardingCompleted, setIsOnboardingCompleted] = useState<boolean | null>(null);
     const [initialState, setInitialState] = useState();
     const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
         const restoreState = async () => {
             try {
-                // Check onboarding status
-                const completed = await AsyncStorage.getItem(ONBOARDING_COMPLETED_KEY);
-                setIsOnboardingCompleted(completed === 'true');
-
-                // Restore navigation state
+                // Restore navigation state only
                 const savedStateString = await AsyncStorage.getItem(PERSISTENCE_KEY);
                 const state = savedStateString ? JSON.parse(savedStateString) : undefined;
                 if (state) setInitialState(state);
             } catch (error) {
-                console.error('Error restoring state:', error);
-                setIsOnboardingCompleted(false);
+                console.error('Error restoring navigation state:', error);
             } finally {
                 setIsReady(true);
             }
@@ -59,15 +52,9 @@ const AppNavigator = () => {
         restoreState();
     }, []);
 
-    // Show splash screen while checking onboarding status and restoring state
-    if (!isReady || isOnboardingCompleted === null) {
-        return (
-            <NavigationContainer>
-                <Stack.Navigator screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="Splash" component={SplashScreen} />
-                </Stack.Navigator>
-            </NavigationContainer>
-        );
+    // Wait for state restoration
+    if (!isReady) {
+        return null; // Or a simple loading indicator
     }
 
     return (
@@ -83,12 +70,12 @@ const AppNavigator = () => {
             }}
         >
             <Stack.Navigator
-                initialRouteName={isOnboardingCompleted ? 'Search' : 'Onboarding'}
+                initialRouteName="Splash"
                 screenOptions={{
                     headerShown: false,
                 }}
             >
-                {/* Splash Screen - Only accessible via direct navigation */}
+                {/* Splash Screen - Initial screen */}
                 <Stack.Screen name="Splash" component={SplashScreen} />
 
                 {/* Onboarding Flow */}
