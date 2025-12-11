@@ -10,10 +10,12 @@ import {
     Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { useAuth } from '../contexts/AuthContext';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { logout } from '../store/slices/authSlice';
 
 const ProfileScreen = ({ navigation }: any) => {
-    const { user, logout } = useAuth();
+    const dispatch = useAppDispatch();
+    const { user } = useAppSelector((state) => state.auth);
 
     const menuItems = [
         { id: '1', title: 'My Rides', icon: 'car', action: () => console.log('My Rides') },
@@ -25,7 +27,8 @@ const ProfileScreen = ({ navigation }: any) => {
 
     const handleLogout = async () => {
         console.log('Logging out...');
-        await logout();
+        dispatch(logout());
+        navigation.navigate('Onboarding'); // Navigate to login screen
     };
 
     return (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -10,15 +10,20 @@ import {
     TextInput,
     Alert,
     Image,
+    Platform,
+    PermissionsAndroid,
+    Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Button from '../components/Button';
-import { useAuth } from '../contexts/AuthContext';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { fetchUserProfile } from '../store/slices/authSlice';
 import { authService } from '../services/api/auth';
 
 const EditProfileScreen = ({ navigation }: any) => {
-    const { user, updateProfile } = useAuth();
+    const dispatch = useAppDispatch();
+    const { user } = useAppSelector((state) => state.auth);
     const [name, setName] = useState(user?.name || '');
     const [phone, setPhone] = useState(user?.phone || '');
     const [email, setEmail] = useState(user?.email || '');
@@ -26,15 +31,110 @@ const EditProfileScreen = ({ navigation }: any) => {
     const [newImage, setNewImage] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
 
+    // Sync local state when user data loads/changes from Redux
+    useEffect(() => {
+        if (user) {
+            setName(user.name || '');
+            setPhone(user.phone || '');
+            setEmail(user.email || '');
+            if (!newImage) {
+                setProfileImage(user.profileImage || null);
+            }
+        }
+    }, [user]);
+
+    const requestStoragePermission = async () => {
+        if (Platform.OS === 'android') {
+            try {
+                // Android 13+ (API 33+) uses different permission
+                const androidVersion = Platform.Version as number;
+                const permission = androidVersion >= 33
+                    ? 'android.permission.READ_MEDIA_IMAGES' as any
+                    : PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+
+                // Check if already granted
+                const checkResult = await PermissionsAndroid.check(permission);
+                if (checkResult) {
+                    console.log('✅ Permission already granted');
+                    return true;
+                }
+
+                console.log('📱 Requesting permission:', permission);
+
+                // Request permission
+                const granted = await PermissionsAndroid.request(
+                    permission,
+                    {
+                        title: 'Storage Permission Required',
+                        message: 'Local Toto needs access to your photos to update your profile picture',
+                        buttonNeutral: 'Ask Me Later',
+                        buttonNegative: 'Cancel',
+                        buttonPositive: 'OK',
+                    }
+                );
+
+                console.log('📍 Permission result:', granted);
+
+                if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                    console.log('✅ Permission granted!');
+                    return true;
+                } else if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+                    console.log('❌ Permission denied permanently');
+                    Alert.alert(
+                        'Permission Required',
+                        'Storage permission was permanently denied. Please enable it manually:\n\nSettings → Apps → Local Toto → Permissions → Photos',
+                        [
+                            { text: 'Cancel', style: 'cancel' },
+                            {
+                                text: 'Open Settings',
+                                onPress: () => Linking.openSettings()
+                            }
+                        ]
+                    );
+                    return false;
+                } else {
+                    console.log('❌ Permission denied');
+                    return false;
+                }
+            } catch (err) {
+                console.error('❌ Permission error:', err);
+                return false;
+            }
+        }
+        return true;
+    };
+
     const handleImagePick = async () => {
+        console.log('📸 Opening image picker...');
+
+        const hasPermission = await requestStoragePermission();
+        if (!hasPermission) {
+            console.log('❌ No permission, aborting');
+            return;
+        }
+
+        console.log('✅ Permission granted, launching library');
+
         const result = await launchImageLibrary({
             mediaType: 'photo',
             quality: 0.8,
             selectionLimit: 1,
         });
 
+        if (result.didCancel) {
+            console.log('❌ User cancelled');
+            return;
+        }
+
+        if (result.errorCode) {
+            console.error('❌ Image picker error:', result.errorCode, result.errorMessage);
+            Alert.alert('Error', 'Failed to pick image: ' + result.errorMessage);
+            return;
+        }
+
         if (result.assets && result.assets.length > 0) {
             const asset = result.assets[0];
+            console.log('✅ Image selected:', asset.uri);
             setNewImage(asset);
             setProfileImage(asset.uri || null);
         }
@@ -61,12 +161,13 @@ const EditProfileScreen = ({ navigation }: any) => {
             }
 
             await authService.updateProfile(data);
-            await updateProfile(); // Refresh local user state
+            await dispatch(fetchUserProfile()).unwrap();
             Alert.alert('Success', 'Profile updated successfully');
             navigation.goBack();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to update profile:', error);
-            Alert.alert('Error', 'Failed to update profile');
+            const message = error?.response?.data?.message || error?.message || 'Failed to update profile';
+            Alert.alert('Error', message);
         } finally {
             setIsLoading(false);
         }
@@ -289,8 +390,8 @@ const styles = StyleSheet.create({
     },
     saveButton: {
         marginBottom: 12,
-        backgroundColor: '#2D7C4F', // Added Green Background
-        borderWidth: 0, // Removed white border
+        backgroundColor: '#2D7C4F',
+        borderWidth: 0,
     },
     cancelButton: {
         borderWidth: 2,
@@ -303,7 +404,7 @@ const styles = StyleSheet.create({
     cancelButtonText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#333', // Changed to dark grey for visibility
+        color: '#333',
     },
 });
 

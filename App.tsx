@@ -13,10 +13,12 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import { store, persistor } from './src/store';
 
 import AppNavigator from './src/navigation/AppNavigator';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { AuthProvider } from './src/contexts/AuthContext';
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
   const html = `
@@ -35,14 +37,16 @@ function App() {
     </body>
   </html>`;
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AuthProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <AppNavigator />
-        </GestureHandlerRootView>
-      </AuthProvider>
-    </SafeAreaProvider>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <SafeAreaProvider>
+          <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <AppNavigator />
+          </GestureHandlerRootView>
+        </SafeAreaProvider>
+      </PersistGate>
+    </Provider>
   );
 }
 

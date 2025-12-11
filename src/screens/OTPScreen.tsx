@@ -13,12 +13,14 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Button from '../components/Button';
-import { useAuth } from '../contexts/AuthContext';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { loginWithOtp, fetchUserProfile } from '../store/slices/authSlice';
 
 const { width } = Dimensions.get('window');
 
 const OTPScreen = ({ navigation, route }: any) => {
-    const { login } = useAuth();
+    const dispatch = useAppDispatch();
+    const { isLoading, error } = useAppSelector((state) => state.auth);
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [timer, setTimer] = useState(60);
     const inputRefs = useRef<(TextInput | null)[]>([]);
@@ -104,12 +106,18 @@ const OTPScreen = ({ navigation, route }: any) => {
         try {
             // Get phone number from params
             const phoneNumber = route.params?.phone || '+919876543210'; // Fallback for dev
-            await login(phoneNumber, otpCode);
-            // Navigation is handled by AuthContext state change or we can force it here
-            // navigation.navigate('Map'); 
-        } catch (error) {
+
+            // Dispatch Redux action
+            await dispatch(loginWithOtp({ phoneNumber, otp: otpCode })).unwrap();
+
+            // Fetch user profile after successful login
+            await dispatch(fetchUserProfile()).unwrap();
+
+            // Navigate to main app
+            navigation.navigate('Map');
+        } catch (error: any) {
             console.error('Verification failed:', error);
-            Alert.alert('Error', 'Invalid OTP. Please try again.');
+            Alert.alert('Error', error || 'Invalid OTP. Please try again.');
         }
     };
 
@@ -197,10 +205,12 @@ const OTPScreen = ({ navigation, route }: any) => {
                         isComplete ? styles.verifyButtonActive : styles.verifyButtonInactive,
                     ]}
                     onPress={handleVerify}
-                    disabled={!isComplete}
+                    disabled={!isComplete || isLoading}
                     activeOpacity={0.8}
                 >
-                    <Text style={styles.verifyButtonText}>Verify</Text>
+                    <Text style={styles.verifyButtonText}>
+                        {isLoading ? 'Verifying...' : 'Verify'}
+                    </Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
