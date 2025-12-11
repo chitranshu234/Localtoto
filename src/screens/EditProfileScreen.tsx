@@ -150,7 +150,7 @@ const EditProfileScreen = ({ navigation }: any) => {
                 const formData = new FormData();
                 formData.append('name', name);
                 formData.append('email', email);
-                formData.append('profile_image', {
+                formData.append('photo', {
                     uri: newImage.uri,
                     type: newImage.type,
                     name: newImage.fileName || 'profile.jpg',

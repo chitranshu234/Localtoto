@@ -26,7 +26,7 @@ export const loginWithOtp = createAsyncThunk(
     'auth/loginWithOtp',
     async ({ phoneNumber, otp }: { phoneNumber: string; otp: string }, { rejectWithValue }) => {
         try {
-            const response: AuthResponse = await authService.verifyOtp({ phoneNumber, otp });
+            const response: AuthResponse = await authService.verifyOtp({ phoneNumber: phoneNumber, otp });
 
             // Store tokens in AsyncStorage for API client interceptor
             await AsyncStorage.setItem('access_token', response.access);

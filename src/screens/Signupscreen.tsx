@@ -35,10 +35,13 @@ const SignUpScreen = ({ navigation }: any) => {
       try {
         const formattedPhone = `+${callingCode}${phone}`;
         console.log('Sending OTP to:', formattedPhone);
-        await authService.sendOtp({ phoneNumber: formattedPhone });
+        console.log('Request payload:', { phoneNumber: phone });
+        await authService.sendOtp({ phoneNumber: phone });
         navigation?.replace('OTP', { phone: formattedPhone });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to send OTP:', error);
+        console.error('Error response data:', JSON.stringify(error.response?.data));
+        console.error('Error status:', error.response?.status);
         Alert.alert('Error', 'Failed to send OTP. Please try again.');
       }
     }
