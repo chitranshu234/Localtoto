@@ -47,12 +47,12 @@ const SplashScreen = ({ navigation }: any) => {
                 const completed = await AsyncStorage.getItem(ONBOARDING_COMPLETED_KEY);
                 const isOnboardingCompleted = completed === 'true';
 
-                // Wait for animations to finish (1.5 seconds)
+                // Wait for animations to finish (2.5 seconds)
                 setTimeout(() => {
                     if (navigation) {
                         navigation.replace(isOnboardingCompleted ? 'Search' : 'Onboarding');
                     }
-                }, 1500);
+                }, 2500);
             } catch (error) {
                 console.error('Error checking onboarding status:', error);
                 // Default to onboarding if error
@@ -60,7 +60,7 @@ const SplashScreen = ({ navigation }: any) => {
                     if (navigation) {
                         navigation.replace('Onboarding');
                     }
-                }, 1500);
+                }, 2500);
             }
         };
 
