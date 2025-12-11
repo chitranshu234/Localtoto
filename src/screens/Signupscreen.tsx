@@ -7,27 +7,36 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   Dimensions,
   Image,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import CountryPicker, { Country, CountryCode } from 'react-native-country-picker-modal';
 import { authService } from '../services/api/auth';
 
 const { width } = Dimensions.get('window');
 
 const SignUpScreen = ({ navigation }: any) => {
   const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState<CountryCode>('IN');
+  const [callingCode, setCallingCode] = useState('91');
+  const [countryPickerVisible, setCountryPickerVisible] = useState(false);
+
+  const onSelectCountry = (country: Country) => {
+    setCountryCode(country.cca2);
+    setCallingCode(country.callingCode[0]);
+    console.log('Selected country:', country.name, 'Code:', country.callingCode[0]);
+  };
 
   const handleSendOTP = async () => {
-    if (phone.length === 10) {
+    if (phone.length >= 10) {
       try {
-        console.log('Sending OTP to:', phone);
-        // Format phone number to E.164 if needed, assuming backend takes +91
-        const formattedPhone = `+91${phone}`;
+        const formattedPhone = `+${callingCode}${phone}`;
+        console.log('Sending OTP to:', formattedPhone);
         await authService.sendOtp({ phoneNumber: formattedPhone });
-        navigation?.navigate('OTP', { phone: formattedPhone });
+        navigation?.replace('OTP', { phone: formattedPhone });
       } catch (error) {
         console.error('Failed to send OTP:', error);
         Alert.alert('Error', 'Failed to send OTP. Please try again.');
@@ -69,14 +78,28 @@ const SignUpScreen = ({ navigation }: any) => {
             </View>
 
             <View style={styles.mobileContainer}>
-              <View style={styles.countryCode}>
-                <View style={styles.flag}>
-                  <View style={[styles.flagPart, { backgroundColor: '#FF9933' }]} />
-                  <View style={[styles.flagPart, { backgroundColor: 'white' }]} />
-                  <View style={[styles.flagPart, { backgroundColor: '#1F41A0' }]} />
-                </View>
-                <Text style={styles.countryCodeText}>+91</Text>
-              </View>
+              <TouchableOpacity
+                style={styles.countryCode}
+                onPress={() => setCountryPickerVisible(true)}
+                activeOpacity={0.7}
+              >
+                <CountryPicker
+                  countryCode={countryCode}
+                  withFilter
+                  withFlag
+                  withCallingCode
+                  withEmoji
+                  onSelect={onSelectCountry}
+                  visible={countryPickerVisible}
+                  onClose={() => setCountryPickerVisible(false)}
+                  containerButtonStyle={styles.countryPickerButton}
+                  theme={{
+                    backgroundColor: '#f9f9f9',
+                    onBackgroundTextColor: '#333',
+                  }}
+                />
+                <Text style={styles.countryCodeText}>+{callingCode}</Text>
+              </TouchableOpacity>
 
               <TextInput
                 style={styles.mobileInput}
@@ -97,12 +120,6 @@ const SignUpScreen = ({ navigation }: any) => {
               <Text style={styles.sendOtpBtnText}>Send OTP</Text>
             </TouchableOpacity>
           </View>
-
-          {/* <View style={styles.socialContainer}>
-            <TouchableOpacity style={styles.facebookBtn}>
-              <Text style={styles.socialBtnText}>f Facebook</Text>
-            </TouchableOpacity>
-          </View> */}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -206,23 +223,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#f0f0f0',
     borderRadius: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 12,
     backgroundColor: '#f9f9f9',
-    gap: 6,
+    gap: 8,
   },
-  flag: {
-    flexDirection: 'row',
-    width: 24,
-    height: 16,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  flagPart: {
-    flex: 1,
+  countryPickerButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   countryCodeText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: '#333',
   },
@@ -249,20 +260,6 @@ const styles = StyleSheet.create({
   sendOtpBtnText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600',
-  },
-  socialContainer: {
-    marginBottom: 15,
-  },
-  facebookBtn: {
-    backgroundColor: '#1877F2',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  socialBtnText: {
-    color: 'white',
-    fontSize: 14,
     fontWeight: '600',
   },
 });

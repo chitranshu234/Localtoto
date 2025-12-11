@@ -8,8 +8,8 @@ import {
     FlatList,
     NativeSyntheticEvent,
     NativeScrollEvent,
-    SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -73,7 +73,7 @@ const OnboardingScreen = () => {
             // Permission granted, save onboarding and navigate
             try {
                 await AsyncStorage.setItem('@localtoto_onboarding_completed', 'true');
-                navigation.navigate('Search');
+                navigation.replace('Search');
             } catch (error) {
                 console.error('Error saving onboarding status:', error);
                 navigation.navigate('Search');
@@ -84,7 +84,7 @@ const OnboardingScreen = () => {
             LocationService.showPermissionDeniedAlert();
             try {
                 await AsyncStorage.setItem('@localtoto_onboarding_completed', 'true');
-                navigation.navigate('Search');
+                navigation.replace('Search');
             } catch (error) {
                 console.error('Error saving onboarding status:', error);
                 navigation.navigate('Search');
@@ -96,10 +96,10 @@ const OnboardingScreen = () => {
         // Skip location permission for now, will be asked on SearchScreen
         try {
             await AsyncStorage.setItem('@localtoto_onboarding_completed', 'true');
-            navigation.navigate('Search');
+            navigation.replace('Search');
         } catch (error) {
             console.error('Error saving onboarding status:', error);
-            navigation.navigate('Search');
+            navigation.replace('Search');
         }
     };
 

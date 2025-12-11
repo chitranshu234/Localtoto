@@ -114,7 +114,7 @@ const OTPScreen = ({ navigation, route }: any) => {
             await dispatch(fetchUserProfile()).unwrap();
 
             // Navigate to main app
-            navigation.navigate('Map');
+            navigation.replace('Map');
         } catch (error: any) {
             console.error('Verification failed:', error);
             Alert.alert('Error', error || 'Invalid OTP. Please try again.');
