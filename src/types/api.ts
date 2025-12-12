@@ -1,9 +1,15 @@
 export interface User {
-    id: string;
-    name: string;
-    phone: string;
+    id: number;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    isVerified: boolean;
+    profilePhotoUrl: string | null;
     email?: string;
-    profileImage?: string;
+    // Shorthand/additional properties commonly used in the UI
+    name?: string;  // Composite of firstName + lastName or separate field
+    phone?: string;  // Alias for phoneNumber
+    profileImage?: string;  // Alias for profilePhotoUrl
 }
 
 // Auth Types
@@ -17,8 +23,12 @@ export interface VerifyOtpRequest {
 }
 
 export interface AuthResponse {
-    access: string;
-    refresh: string;
+    success: boolean;
+    message: string;
+    token: string;
+    refreshToken: string;
+    user: User;
+    isNewUser: boolean;
 }
 
 export interface RefreshTokenRequest {

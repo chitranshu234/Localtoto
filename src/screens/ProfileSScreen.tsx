@@ -18,17 +18,43 @@ const ProfileScreen = ({ navigation }: any) => {
     const { user } = useAppSelector((state) => state.auth);
 
     const menuItems = [
-        { id: '1', title: 'My Rides', icon: 'car', action: () => console.log('My Rides') },
-        { id: '2', title: 'Saved Locations', icon: 'map-marker', action: () => console.log('Saved Locations') },
-        { id: '3', title: 'Payment Methods', icon: 'credit-card', action: () => console.log('Payment Methods') },
-        { id: '4', title: 'Help & Support', icon: 'question-circle', action: () => console.log('Help & Support') },
-        { id: '5', title: 'Settings', icon: 'cog', action: () => console.log('Settings') },
+        {
+            id: '1',
+            title: 'My Rides',
+            icon: 'car',
+            action: () => navigation.navigate('Activity')
+        },
+        {
+            id: '2',
+            title: 'Saved Locations',
+            icon: 'map-marker',
+            action: () => console.log('Saved Locations - Screen not yet created')
+        },
+        {
+            id: '3',
+            title: 'Payment Methods',
+            icon: 'credit-card',
+            action: () => navigation.navigate('Payment')
+        },
+        {
+            id: '4',
+            title: 'Help & Support',
+            icon: 'question-circle',
+            action: () => console.log('Help & Support - Screen not yet created')
+        },
+        {
+            id: '5',
+            title: 'Settings',
+            icon: 'cog',
+            action: () => console.log('Settings - Screen not yet created')
+        },
     ];
 
     const handleLogout = async () => {
         console.log('Logging out...');
         dispatch(logout());
-        navigation.navigate('Onboarding'); // Navigate to login screen
+        // Navigation to Onboarding happens automatically via AppNavigator's conditional rendering
+        // when isAuthenticated becomes false
     };
 
     return (
@@ -59,7 +85,7 @@ const ProfileScreen = ({ navigation }: any) => {
                         )}
                     </View>
                     <Text style={styles.userName}>{user?.name || 'User'}</Text>
-                    <Text style={styles.userPhone}>{user?.phone || ''}</Text>
+                    <Text style={styles.userPhone}>{user?.phone || user?.phoneNumber || ''}</Text>
                     <TouchableOpacity
                         style={styles.editButton}
                         onPress={() => navigation.navigate('EditProfile')}

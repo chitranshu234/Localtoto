@@ -73,10 +73,10 @@ const OnboardingScreen = () => {
             // Permission granted, save onboarding and navigate
             try {
                 await AsyncStorage.setItem('@localtoto_onboarding_completed', 'true');
-                navigation.replace('Search');
+                navigation.replace('signup' as any);
             } catch (error) {
                 console.error('Error saving onboarding status:', error);
-                navigation.navigate('Search');
+                navigation.replace('signup' as any);
             }
         } else {
             // Permission denied, but still save onboarding and navigate
@@ -84,10 +84,10 @@ const OnboardingScreen = () => {
             LocationService.showPermissionDeniedAlert();
             try {
                 await AsyncStorage.setItem('@localtoto_onboarding_completed', 'true');
-                navigation.replace('Search');
+                navigation.replace('signup' as any);
             } catch (error) {
                 console.error('Error saving onboarding status:', error);
-                navigation.navigate('Search');
+                navigation.replace('signup' as any);
             }
         }
     };
@@ -96,13 +96,12 @@ const OnboardingScreen = () => {
         // Skip location permission for now, will be asked on SearchScreen
         try {
             await AsyncStorage.setItem('@localtoto_onboarding_completed', 'true');
-            navigation.replace('Search');
+            navigation.replace('signup' as any);
         } catch (error) {
             console.error('Error saving onboarding status:', error);
-            navigation.replace('Search');
+            navigation.replace('signup' as any);
         }
     };
-
 
     const renderItem = ({ item }: { item: typeof slides[0] }) => {
         if (item.type === 'location') {
@@ -125,16 +124,10 @@ const OnboardingScreen = () => {
                     </View>
                     <View style={styles.buttonContainer}>
                         <Button
-                            title="Use current location"
+                            title="Get Started"
                             onPress={handleUseCurrentLocation}
                             variant="primary"
                             style={styles.primaryBtn}
-                        />
-                        <Button
-                            title="Select it manually"
-                            onPress={handleSelectManually}
-                            variant="secondary"
-                            style={styles.secondaryBtn}
                         />
                     </View>
                 </View>

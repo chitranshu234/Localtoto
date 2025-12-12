@@ -28,13 +28,22 @@ export const loginWithOtp = createAsyncThunk(
         try {
             const response: AuthResponse = await authService.verifyOtp({ phoneNumber: phoneNumber, otp });
 
+            console.log('✅ Backend response:', JSON.stringify(response));
+            console.log('✅ Access token:', response.token);
+            console.log('✅ Refresh token:', response.refreshToken);
+
             // Store tokens in AsyncStorage for API client interceptor
-            await AsyncStorage.setItem('access_token', response.access);
-            await AsyncStorage.setItem('refresh_token', response.refresh);
+            await AsyncStorage.setItem('access_token', response.token);
+            await AsyncStorage.setItem('refresh_token', response.refreshToken);
 
             return response;
         } catch (error: any) {
-            return rejectWithValue(error.response?.data?.message || 'Login failed');
+            console.error('🔴 Redux loginWithOtp error:', error);
+            console.error('🔴 Error response:', error.response);
+            console.error('🔴 Error response data:', error.response?.data);
+            console.error('🔴 Error message:', error.response?.data?.message);
+            console.error('🔴 Error status:', error.response?.status);
+            return rejectWithValue(error.response?.data?.message || error.message || 'Login failed');
         }
     }
 );
@@ -103,9 +112,14 @@ const authSlice = createSlice({
             })
             .addCase(loginWithOtp.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.accessToken = action.payload.access;
-                state.refreshToken = action.payload.refresh;
-                // User will be set after fetchUserProfile
+                state.accessToken = action.payload.token;
+                state.refreshToken = action.payload.refreshToken;
+                // Merge the phoneNumber from login into the user object
+                state.user = {
+                    ...action.payload.user,
+                    phoneNumber: action.payload.user?.phoneNumber || action.meta.arg.phoneNumber,
+                };
+                state.isAuthenticated = true;
             })
             .addCase(loginWithOtp.rejected, (state, action) => {
                 state.isLoading = false;

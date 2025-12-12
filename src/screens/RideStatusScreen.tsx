@@ -22,9 +22,9 @@ const { width, height } = Dimensions.get('window');
 type RootStackParamList = {
     Onboarding: undefined;
     Location: undefined;
-    DriverFound: undefined;
     RideStatus: undefined;
     Rating: undefined;
+    MainTabs: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'RideStatus'>;
@@ -121,16 +121,32 @@ const RideStatusScreen = () => {
         }
     };
 
+    const handleGoBack = () => {
+        navigation.goBack();
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#219653" />
-            
+
             <View style={styles.backgroundContainer}>
                 <View style={styles.circle1} />
                 <View style={styles.circle2} />
             </View>
 
             <View style={styles.content}>
+                {/* Header with back button */}
+                <View style={styles.header}>
+                    <TouchableOpacity
+                        style={styles.backButton}
+                        onPress={handleGoBack}
+                        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                    >
+                        <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Ride Status</Text>
+                </View>
+
                 <View style={styles.mapContainer}>
                     <View style={styles.mapPlaceholder}>
                         <MaterialCommunityIcons name="map-outline" size={50} color="rgba(255, 255, 255, 0.5)" />
@@ -150,7 +166,7 @@ const RideStatusScreen = () => {
                 </View>
 
                 <View style={styles.statusContainer}>
-                    <ScrollView 
+                    <ScrollView
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={styles.scrollContent}
                     >
@@ -177,14 +193,14 @@ const RideStatusScreen = () => {
                         <View style={styles.timerContainer}>
                             <View style={styles.timerCard}>
                                 <View style={styles.timerHeader}>
-                                    <Ionicons 
-                                        name={rideStatus === 'arriving' ? 'time-outline' : rideStatus === 'in-progress' ? 'speedometer-outline' : 'checkmark-done-circle-outline'} 
-                                        size={16} 
-                                        color="#666" 
+                                    <Ionicons
+                                        name={rideStatus === 'arriving' ? 'time-outline' : rideStatus === 'in-progress' ? 'speedometer-outline' : 'checkmark-done-circle-outline'}
+                                        size={16}
+                                        color="#666"
                                     />
                                     <Text style={styles.timerLabel}>
                                         {rideStatus === 'arriving' ? 'Arrival Time' :
-                                         rideStatus === 'in-progress' ? 'Trip Time' : 'Completed'}
+                                            rideStatus === 'in-progress' ? 'Trip Time' : 'Completed'}
                                     </Text>
                                 </View>
                                 <Text style={styles.timerValue}>
@@ -199,10 +215,10 @@ const RideStatusScreen = () => {
                                     styles.progressDot,
                                     rideStatus !== 'arriving' && styles.progressDotCompleted
                                 ]}>
-                                    <Ionicons 
-                                        name="location" 
-                                        size={18} 
-                                        color={rideStatus !== 'arriving' ? '#FFFFFF' : '#999'} 
+                                    <Ionicons
+                                        name="location"
+                                        size={18}
+                                        color={rideStatus !== 'arriving' ? '#FFFFFF' : '#999'}
                                     />
                                 </View>
                                 <Text style={styles.progressText}>Pickup</Text>
@@ -211,17 +227,17 @@ const RideStatusScreen = () => {
                             <View style={[
                                 styles.progressLine,
                                 rideStatus !== 'arriving' && styles.progressLineCompleted
-                            ]} /> 
+                            ]} />
 
                             <View style={styles.progressStep}>
                                 <View style={[
                                     styles.progressDot,
                                     rideStatus === 'arrived' && styles.progressDotCompleted
                                 ]}>
-                                    <Ionicons 
-                                        name="flag" 
-                                        size={18} 
-                                        color={rideStatus === 'arrived' ? '#FFFFFF' : '#999'} 
+                                    <Ionicons
+                                        name="flag"
+                                        size={18}
+                                        color={rideStatus === 'arrived' ? '#FFFFFF' : '#999'}
                                     />
                                 </View>
                                 <Text style={styles.progressText}>Destination</Text>
@@ -256,7 +272,7 @@ const RideStatusScreen = () => {
                                 />
                             ) : (
                                 <>
-                                    <TouchableOpacity 
+                                    <TouchableOpacity
                                         style={styles.emergencyButton}
                                         onPress={() => navigation.navigate('Rating')}
                                     >
@@ -265,7 +281,7 @@ const RideStatusScreen = () => {
                                     </TouchableOpacity>
                                     <Button
                                         title={rideStatus === 'arriving' ? 'Cancel Ride' : 'Share Location'}
-                                        onPress={() => {}}
+                                        onPress={() => { }}
                                         variant="primary"
                                         style={styles.actionButton}
                                     />
@@ -283,6 +299,26 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#219653',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 15,
+    },
+    backButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 15,
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#FFFFFF',
     },
     backgroundContainer: {
         position: 'absolute',
@@ -318,7 +354,7 @@ const styles = StyleSheet.create({
         zIndex: 1,
     },
     mapContainer: {
-        flex: 0.35,
+        flex: 0.3,
         position: 'relative',
         backgroundColor: 'rgba(0, 0, 0, 0.1)',
     },
@@ -349,7 +385,7 @@ const styles = StyleSheet.create({
         borderRadius: 22,
     },
     statusContainer: {
-        flex: 0.65,
+        flex: 0.7,
         backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 28,
         borderTopRightRadius: 28,
@@ -362,7 +398,7 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingHorizontal: 22,
         paddingTop: 22,
-        paddingBottom: 30,
+        paddingBottom: 100,
     },
     statusImageContainer: {
         alignItems: 'center',

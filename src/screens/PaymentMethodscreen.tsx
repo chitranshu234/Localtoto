@@ -5,27 +5,32 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
+  StatusBar,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
-const PaymentMethodScreen = () => {
+const PaymentMethodScreen = ({ navigation }: any) => {
   const [selectedMethod, setSelectedMethod] = useState('paypal');
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#2D7C4F" />
+
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity> 
-          <Text style={styles.backButton}>{'<'}</Text>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+        >
+          <Icon name="arrow-left" size={20} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.doneButton}>Done</Text>
+        <Text style={styles.headerTitle}>Payment Method</Text>
       </View>
 
-      {/* Title */}
-      <Text style={styles.title}>Payment Method</Text>
-
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Cash Option */}
         <View style={styles.section}>
           <TouchableOpacity style={styles.cashCard}>
@@ -93,44 +98,43 @@ const PaymentMethodScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F5F5F5',
   },
   header: {
+    backgroundColor: '#2D7C4F',
+    paddingTop: 50,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#1a7f4a',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
   },
   backButton: {
-    fontSize: 24,
-    color: 'white',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  headerTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
-  },
-  doneButton: {
-    fontSize: 16,
-    color: 'white',
-    fontWeight: '600',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: 'white',
-    backgroundColor: '#1a7f4a',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    color: '#FFFFFF',
   },
   content: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 20,
+    paddingBottom: 100,
   },
   section: {
     marginBottom: 20,
@@ -149,10 +153,10 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   cashIcon: {
     width: 50,
@@ -189,10 +193,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'white',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   selectedCard: {
     borderColor: '#1a7f4a',

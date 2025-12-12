@@ -105,7 +105,7 @@ const OTPScreen = ({ navigation, route }: any) => {
 
         try {
             // Get phone number from params
-            const phoneNumber = route.params?.phone || '+919876543210'; // Fallback for dev
+            const phoneNumber = (route.params?.phone || '+919876543210').replace(/[^0-9]/g, '').slice(-10); // Backend expects 10 digits only
 
             // Dispatch Redux action
             await dispatch(loginWithOtp({ phoneNumber, otp: otpCode })).unwrap();
@@ -117,7 +117,10 @@ const OTPScreen = ({ navigation, route }: any) => {
             navigation.replace('Map');
         } catch (error: any) {
             console.error('Verification failed:', error);
-            Alert.alert('Error', error || 'Invalid OTP. Please try again.');
+            console.error('Backend error response:', JSON.stringify(error?.response?.data));
+            console.error('Error status:', error?.response?.status);
+            const errorMessage = error?.response?.data?.message || error?.message || error || 'Invalid OTP. Please try again.';
+            Alert.alert('Error', errorMessage);
         }
     };
 
@@ -155,7 +158,7 @@ const OTPScreen = ({ navigation, route }: any) => {
                 <Text style={styles.title}>Enter OTP</Text>
                 <Text style={styles.subtitle}>
                     We've sent a 6-digit code to{'\n'}
-                    <Text style={styles.phoneNumber}>+91 98765 43210</Text>
+                    <Text style={styles.phoneNumber}>{route.params?.phone || '+91 98765 43210'}</Text>
                 </Text>
 
                 {/* OTP Input Boxes */}

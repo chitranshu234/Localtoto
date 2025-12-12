@@ -32,6 +32,23 @@ export const store = configureStore({
 
 export const persistor = persistStore(store);
 
+// Sync tokens to AsyncStorage after rehydration for API client to use
+persistor.subscribe(() => {
+    const { bootstrapped } = persistor.getState();
+    if (bootstrapped) {
+        const state = store.getState();
+        const { accessToken, refreshToken } = state.auth;
+
+        if (accessToken) {
+            console.log('🔄 Syncing rehydrated token to AsyncStorage...');
+            AsyncStorage.setItem('access_token', accessToken);
+        }
+        if (refreshToken) {
+            AsyncStorage.setItem('refresh_token', refreshToken);
+        }
+    }
+});
+
 // Types
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

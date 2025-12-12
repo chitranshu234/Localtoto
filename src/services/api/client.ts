@@ -14,6 +14,8 @@ const client = axios.create({
 client.interceptors.request.use(
     async (config) => {
         const token = await AsyncStorage.getItem('access_token');
+        console.log('🔍 TOKEN CHECK:', token ? 'Token found' : 'No token');
+        console.log('🔍 TOKEN VALUE:', token);
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -21,6 +23,7 @@ client.interceptors.request.use(
         console.log('🔵 REQUEST:', config.method?.toUpperCase(), config.url);
         console.log('🔵 REQUEST DATA:', JSON.stringify(config.data));
         console.log('🔵 REQUEST HEADERS:', JSON.stringify(config.headers));
+        console.log('🔵 AUTHORIZATION HEADER:', config.headers.Authorization);
         return config;
     },
     (error) => {
@@ -51,11 +54,11 @@ client.interceptors.response.use(
                     refresh: refreshToken,
                 });
 
-                const { access } = response.data;
-                await AsyncStorage.setItem('access_token', access);
+                const { token } = response.data;
+                await AsyncStorage.setItem('access_token', token);
 
                 // Update header and retry original request
-                originalRequest.headers.Authorization = `Bearer ${access}`;
+                originalRequest.headers.Authorization = `Bearer ${token}`;
                 return client(originalRequest);
             } catch (refreshError) {
                 // Refresh failed, logout user

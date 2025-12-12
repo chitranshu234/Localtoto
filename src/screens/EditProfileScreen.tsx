@@ -25,9 +25,9 @@ const EditProfileScreen = ({ navigation }: any) => {
     const dispatch = useAppDispatch();
     const { user } = useAppSelector((state) => state.auth);
     const [name, setName] = useState(user?.name || '');
-    const [phone, setPhone] = useState(user?.phone || '');
+    const [phone, setPhone] = useState(user?.phone || user?.phoneNumber || '');
     const [email, setEmail] = useState(user?.email || '');
-    const [profileImage, setProfileImage] = useState(user?.profileImage || null);
+    const [profileImage, setProfileImage] = useState(user?.profileImage || user?.profilePhotoUrl || null);
     const [newImage, setNewImage] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -35,10 +35,10 @@ const EditProfileScreen = ({ navigation }: any) => {
     useEffect(() => {
         if (user) {
             setName(user.name || '');
-            setPhone(user.phone || '');
+            setPhone(user.phone || user.phoneNumber || '');
             setEmail(user.email || '');
             if (!newImage) {
-                setProfileImage(user.profileImage || null);
+                setProfileImage(user.profileImage || user.profilePhotoUrl || null);
             }
         }
     }, [user]);
@@ -141,37 +141,45 @@ const EditProfileScreen = ({ navigation }: any) => {
     };
 
     const handleSave = async () => {
+        // Backend only supports photo upload, not name/email changes
+        if (!newImage) {
+            Alert.alert(
+                'Photo Only',
+                'Only profile photo changes can be saved. Name and email editing is not available yet.',
+                [{ text: 'OK' }]
+            );
+            return;
+        }
+
         setIsLoading(true);
         try {
-            console.log('Saving profile:', { name, email, newImage });
+            console.log('Uploading profile photo...');
 
-            let data: any;
-            if (newImage) {
-                const formData = new FormData();
-                formData.append('name', name);
-                formData.append('email', email);
-                formData.append('photo', {
-                    uri: newImage.uri,
-                    type: newImage.type,
-                    name: newImage.fileName || 'profile.jpg',
-                });
-                data = formData;
-            } else {
-                data = { name, email };
-            }
+            const formData = new FormData();
+            formData.append('photo', {
+                uri: newImage.uri,
+                type: newImage.type || 'image/jpeg',
+                name: newImage.fileName || 'profile.jpg',
+            } as any);
 
-            await authService.updateProfile(data);
+            await authService.updateProfile(formData);
             await dispatch(fetchUserProfile()).unwrap();
-            Alert.alert('Success', 'Profile updated successfully');
+            Alert.alert('Success', 'Profile photo updated successfully');
             navigation.goBack();
         } catch (error: any) {
             console.error('Failed to update profile:', error);
-            const message = error?.response?.data?.message || error?.message || 'Failed to update profile';
+            let message = error?.response?.data?.message || error?.message || 'Failed to update profile';
+
+            if (error?.response?.status === 401) {
+                message = 'Session expired. Please logout and login again.';
+            }
+
             Alert.alert('Error', message);
         } finally {
             setIsLoading(false);
         }
     };
+
 
     return (
         <View style={styles.container}>

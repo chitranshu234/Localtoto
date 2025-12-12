@@ -7,13 +7,12 @@ import {
   StyleSheet,
   StatusBar,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const TripHistoryScreen = ({ navigation }: any) => {
   const [expandedTrip, setExpandedTrip] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState("rides"); // Current tab state
-  const insets = useSafeAreaInsets()
+
 
   const trips = [
     {
@@ -79,198 +78,135 @@ const TripHistoryScreen = ({ navigation }: any) => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#1a7f4a" />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#2D7C4F" />
 
-      {/* MAIN CONTENT */}
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Icon name="arrow-left" size={20} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Trip History</Text>
-          <View style={{ width: 28 }} />
-        </View>
-
-        {/* Title Section */}
-        <View style={styles.titleSection}>
-          <Text style={styles.mainTitle}>Trip History</Text>
-          <Text style={styles.subtitle}>{trips.length} trips completed</Text>
-        </View>
-
-        {/* Content */}
-        <ScrollView
-          style={styles.content}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 80 }}
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
         >
-          {trips.map((trip) => (
-            <TouchableOpacity
-              key={trip.id}
-              onPress={() => toggleTrip(trip.id)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.tripCard}>
-                {/* Trip Header */}
-                <View style={styles.tripHeader}>
-                  <View>
-                    <Text style={styles.tripDate}>{trip.date}</Text>
-                    <Text style={styles.tripTime}>{trip.time}</Text>
-                  </View>
-                  <View style={styles.amountSection}>
-                    <Text style={styles.tripAmount}>{trip.amount}</Text>
-                    <Text style={styles.tripStatus}>{trip.status}</Text>
-                  </View>
-                </View>
+          <Icon name="arrow-left" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Trip History</Text>
+      </View>
 
-                {/* Location Info */}
-                <View style={styles.locationContainer}>
-                  <View style={styles.timeline}>
-                    <View style={styles.pickupDot} />
-                    <View style={styles.line} />
-                    <View style={styles.dropoffDot} />
-                  </View>
-                  <View style={styles.locationText}>
-                    <Text style={styles.pickupText}>{trip.pickupLocation}</Text>
-                    <Text style={styles.dropoffText}>{trip.dropoffLocation}</Text>
-                  </View>
+      {/* Content */}
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 80 }}
+      >
+        {trips.map((trip) => (
+          <TouchableOpacity
+            key={trip.id}
+            onPress={() => toggleTrip(trip.id)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.tripCard}>
+              {/* Trip Header */}
+              <View style={styles.tripHeader}>
+                <View>
+                  <Text style={styles.tripDate}>{trip.date}</Text>
+                  <Text style={styles.tripTime}>{trip.time}</Text>
                 </View>
-
-                {/* Trip Details */}
-                <View style={styles.detailsRow}>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailIcon}>⏱</Text>
-                    <Text style={styles.detailText}>{trip.duration}</Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailIcon}>📍</Text>
-                    <Text style={styles.detailText}>{trip.distance}</Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailIcon}>🚗</Text>
-                    <Text style={styles.detailText}>{trip.carType}</Text>
-                  </View>
+                <View style={styles.amountSection}>
+                  <Text style={styles.tripAmount}>{trip.amount}</Text>
+                  <Text style={styles.tripStatus}>{trip.status}</Text>
                 </View>
+              </View>
 
-                {/* Expanded Details */}
-                {expandedTrip === trip.id && (
-                  <View style={styles.expandedSection}>
-                    {/* Driver Info */}
-                    <View style={styles.driverSection}>
-                      <View style={styles.driverInfo}>
-                        <View style={styles.driverAvatar}>
-                          <Text style={styles.driverInitial}>
-                            {trip.driverName.charAt(0)}
-                          </Text>
-                        </View>
-                        <View style={styles.driverDetails}>
-                          <Text style={styles.driverName}>{trip.driverName}</Text>
-                          <View style={styles.ratingContainer}>
-                            <Icon name="star" size={12} color="#FFD700" />
-                            <Text style={styles.rating}>{trip.driverRating}</Text>
-                          </View>
+              {/* Location Info */}
+              <View style={styles.locationContainer}>
+                <View style={styles.timeline}>
+                  <View style={styles.pickupDot} />
+                  <View style={styles.line} />
+                  <View style={styles.dropoffDot} />
+                </View>
+                <View style={styles.locationText}>
+                  <Text style={styles.pickupText}>{trip.pickupLocation}</Text>
+                  <Text style={styles.dropoffText}>{trip.dropoffLocation}</Text>
+                </View>
+              </View>
+
+              {/* Trip Details */}
+              <View style={styles.detailsRow}>
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailIcon}>⏱</Text>
+                  <Text style={styles.detailText}>{trip.duration}</Text>
+                </View>
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailIcon}>📍</Text>
+                  <Text style={styles.detailText}>{trip.distance}</Text>
+                </View>
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailIcon}>🚗</Text>
+                  <Text style={styles.detailText}>{trip.carType}</Text>
+                </View>
+              </View>
+
+              {/* Expanded Details */}
+              {expandedTrip === trip.id && (
+                <View style={styles.expandedSection}>
+                  {/* Driver Info */}
+                  <View style={styles.driverSection}>
+                    <View style={styles.driverInfo}>
+                      <View style={styles.driverAvatar}>
+                        <Text style={styles.driverInitial}>
+                          {trip.driverName.charAt(0)}
+                        </Text>
+                      </View>
+                      <View style={styles.driverDetails}>
+                        <Text style={styles.driverName}>{trip.driverName}</Text>
+                        <View style={styles.ratingContainer}>
+                          <Icon name="star" size={12} color="#FFD700" />
+                          <Text style={styles.rating}>{trip.driverRating}</Text>
                         </View>
                       </View>
-                      <TouchableOpacity style={styles.callButton}>
-                        <Icon name="phone" size={16} color="white" />
-                      </TouchableOpacity>
                     </View>
-
-                    {/* Action Buttons */}
-                    <View style={styles.buttonsRow}>
-                      <TouchableOpacity style={styles.bookAgainBtn}>
-                        <Text style={styles.bookAgainText}>Book Again</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.rateBtn}>
-                        <Text style={styles.rateText}>Rate Trip</Text>
-                      </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity style={styles.callButton}>
+                      <Icon name="phone" size={16} color="white" />
+                    </TouchableOpacity>
                   </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          ))}
 
-          {/* Load More Button */}
-          <TouchableOpacity style={styles.loadMoreBtn}>
-            <Text style={styles.loadMoreText}>Load More Trips</Text>
+                  {/* Action Buttons */}
+                  <View style={styles.buttonsRow}>
+                    <TouchableOpacity style={styles.bookAgainBtn}>
+                      <Text style={styles.bookAgainText}>Book Again</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.rateBtn}>
+                      <Text style={styles.rateText}>Rate Trip</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
-        </ScrollView>
-      </View>
+        ))}
 
-      {/* BOTTOM TABS */}
-      <View style={[styles.bottomTabs, { paddingBottom: insets?.bottom }]}>
-        {/* HOME */}
-        <TouchableOpacity
-          style={styles.tab}
-          onPress={() => {
-            setActiveTab("home");
-            navigation.navigate("Search");
-          }}
-        >
-          <Icon
-            name="home"
-            size={22}
-            color={activeTab === "home" ? "#1a7f4a" : "#777"}
-          />
-          <Text style={[styles.tabText, activeTab === "home" && styles.activeTabText]}>
-            Home
-          </Text>
+        {/* Load More Button */}
+        <TouchableOpacity style={styles.loadMoreBtn}>
+          <Text style={styles.loadMoreText}>Load More Trips</Text>
         </TouchableOpacity>
-
-        {/* RIDES */}
-        <TouchableOpacity
-          style={styles.tab}
-          onPress={() => setActiveTab("rides")}
-        >
-          <Icon
-            name="car"
-            size={22}
-            color={activeTab === "rides" ? "#1a7f4a" : "#777"}
-          />
-          <Text style={[styles.tabText, activeTab === "rides" && styles.activeTabText]}>
-            Rides
-          </Text>
-        </TouchableOpacity>
-
-        {/* PROFILE */}
-        <TouchableOpacity
-          style={styles.tab}
-          onPress={() => {
-            setActiveTab("profile");
-            navigation.navigate("Profile");
-          }}
-        >
-          <Icon
-            name="user"
-            size={22}
-            color={activeTab === "profile" ? "#1a7f4a" : "#777"}
-          />
-          <Text style={[styles.tabText, activeTab === "profile" && styles.activeTabText]}>
-            Profile
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#1a7f4a",
-  },
   container: {
     flex: 1,
+    backgroundColor: '#F5F5F5',
   },
   header: {
+    backgroundColor: '#2D7C4F',
+    paddingTop: 50,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#1a7f4a',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
   },
   backButton: {
     width: 40,
@@ -279,34 +215,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 15,
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'white',
-  },
-  titleSection: {
-    backgroundColor: '#1a7f4a',
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-  },
-  mainTitle: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: 'white',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 13,
-    color: '#c8e6c9',
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   content: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 20,
+    paddingBottom: 100,
   },
   tripCard: {
     backgroundColor: 'white',
@@ -521,31 +442,6 @@ const styles = StyleSheet.create({
     color: '#1a7f4a',
     fontWeight: '600',
     fontSize: 14,
-  },
-  // BOTTOM TABS
-  bottomTabs: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-    backgroundColor: '#FFF',
-    borderTopWidth: 1,
-    borderTopColor: '#EEE',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  tab: {
-    alignItems: 'center',
-  },
-  tabText: {
-    fontSize: 12,
-    color: '#777',
-    marginTop: 4,
-  },
-  activeTabText: {
-    color: '#1a7f4a',
-    fontWeight: '600',
   },
 });
 
