@@ -20,7 +20,9 @@ import RideStatusScreen from '../screens/RideStatusScreen';
 import RatingScreen from '../screens/RatingScreen';
 import ConfirmScreen from '../screens/ConfirmScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
-import MapboxLocationScreen from '../screens/Map';
+import SearchScreen from '../screens/SearchScreen';
+import FindingDriverScreen from '../screens/FindingDriverScreen';
+import DriverFoundScreen from '../screens/DriverFoundScreen';
 
 // Navigation refs
 export const navigationRef = React.createRef<NavigationContainerRef<any>>();
@@ -48,9 +50,9 @@ const AuthNavigator = () => {
     );
 };
 
-// Bottom Tab Navigator - Main tabs for authenticated users
-const TabNavigator = () => {
-    return (
+// Reusable Bottom Tab Navigator Component
+const createTabNavigator = (HomeComponent: React.ComponentType<any>) => {
+    return () => (
         <Tab.Navigator
             screenOptions={({ route }) => ({
                 headerShown: false,
@@ -87,7 +89,7 @@ const TabNavigator = () => {
         >
             <Tab.Screen
                 name="Home"
-                component={MapboxLocationScreen}
+                component={HomeComponent}
                 options={{
                     tabBarLabel: 'Home',
                 }}
@@ -110,6 +112,12 @@ const TabNavigator = () => {
     );
 };
 
+// Tab Navigators for each screen
+const SearchTabNavigator = createTabNavigator(SearchScreen);
+const ConfirmTabNavigator = createTabNavigator(ConfirmScreen);
+const FindingDriverTabNavigator = createTabNavigator(FindingDriverScreen);
+const DriverFoundTabNavigator = createTabNavigator(DriverFoundScreen);
+
 // App Stack - For authenticated users
 const MainNavigator = () => {
     return (
@@ -119,10 +127,31 @@ const MainNavigator = () => {
                 animation: 'slide_from_right',
             }}
         >
-            {/* Main Tabs - Root screen */}
+            {/* Main Screens with Bottom Tabs */}
             <AppStack.Screen
-                name="MainTabs"
-                component={TabNavigator}
+                name="SearchTabs"
+                component={SearchTabNavigator}
+                options={{
+                    gestureEnabled: false,
+                }}
+            />
+            <AppStack.Screen
+                name="ConfirmTabs"
+                component={ConfirmTabNavigator}
+                options={{
+                    gestureEnabled: false,
+                }}
+            />
+            <AppStack.Screen
+                name="FindingDriverTabs"
+                component={FindingDriverTabNavigator}
+                options={{
+                    gestureEnabled: false,
+                }}
+            />
+            <AppStack.Screen
+                name="DriverFoundTabs"
+                component={DriverFoundTabNavigator}
                 options={{
                     gestureEnabled: false,
                 }}
@@ -137,9 +166,10 @@ const MainNavigator = () => {
                 }}
             />
             <AppStack.Screen name="Payment" component={PaymentMethodScreen} />
+            <AppStack.Screen name="TripHistory" component={TripHistoryScreen} />
+            <AppStack.Screen name="Profile" component={ProfileScreen} />
 
             {/* Ride Flow - Stack screens without tabs */}
-            <AppStack.Screen name="Confirm" component={ConfirmScreen} />
             <AppStack.Screen name="RideStatus" component={RideStatusScreen} />
             <AppStack.Screen name="Rating" component={RatingScreen} />
         </AppStack.Navigator>

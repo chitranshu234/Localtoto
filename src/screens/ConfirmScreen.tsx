@@ -44,11 +44,14 @@ const ConfirmScreen = ({ navigation }: any) => {
     const [selectedVehicle, setSelectedVehicle] = useState(VEHICLES[0].id);
     const [paymentMethod, setPaymentMethod] = useState('cash');
     const [promoCode, setPromoCode] = useState('');
+    const [pickupLocation, setPickupLocation] = useState('Current Location');
+    const [dropLocation, setDropLocation] = useState('Central Mall');
     const handleConfirm = () => {
         console.log('Ride Confirmed');
         console.log('Selected Vehicle:', selectedVehicle);
         console.log('Payment Method:', paymentMethod);
         console.log('Promo Code:', promoCode);
+        navigation.navigate('FindingDriverTabs');
     };
     const paymentMethods = [
         { key: 'cash', label: 'Cash', icon: 'money' },
@@ -73,23 +76,23 @@ const ConfirmScreen = ({ navigation }: any) => {
                 <View style={styles.tripInfoCard}>
                     <TouchableOpacity
                         style={styles.locationRow}
-                        onPress={() => navigation.navigate('Search', { type: 'pickup' })}
+                        onPress={() => navigation.navigate('SearchTabs', { type: 'pickup' })}
                     >
                         <View style={styles.greenDot} />
                         <View style={styles.locationTextContainer}>
                             <Text style={styles.locationLabel}>Pickup</Text>
-                            <Text style={styles.locationText}>Current Location</Text>
+                            <Text style={styles.locationText}>{pickupLocation}</Text>
                         </View>
                     </TouchableOpacity>
                     <View style={styles.dividerLine} />
                     <TouchableOpacity
                         style={styles.locationRow}
-                        onPress={() => navigation.navigate('Search', { type: 'drop' })}
+                        onPress={() => navigation.navigate('SearchTabs', { type: 'drop' })}
                     >
                         <View style={styles.redDot} />
                         <View style={styles.locationTextContainer}>
                             <Text style={styles.locationLabel}>Drop</Text>
-                            <Text style={styles.locationText}>Central Mall</Text>
+                            <Text style={styles.locationText}>{dropLocation}</Text>
                         </View>
                     </TouchableOpacity>
                 </View>
@@ -147,10 +150,10 @@ const ConfirmScreen = ({ navigation }: any) => {
                                 ]}
                                 onPress={() => setPaymentMethod(method.key)}
                             >
-                                <Icon 
-                                    name={method.icon} 
-                                    size={16} 
-                                    color={paymentMethod === method.key ? '#FFFFFF' : '#2D7C4F'} 
+                                <Icon
+                                    name={method.icon}
+                                    size={16}
+                                    color={paymentMethod === method.key ? '#FFFFFF' : '#2D7C4F'}
                                     style={{ marginRight: 6 }}
                                 />
                                 <Text style={[

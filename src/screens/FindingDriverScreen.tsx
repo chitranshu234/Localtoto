@@ -145,6 +145,12 @@ const FindingDriverScreen = ({ navigation }: any) => {
                     </View>
                 </View>
                 <Text style={styles.waitTime}>Estimated wait: 2-3 minutes</Text>
+                <TouchableOpacity
+                    style={styles.confirmButton}
+                    onPress={() => navigation.navigate('DriverFoundTabs')}
+                >
+                    <Text style={styles.confirmButtonText}>Confirm Ride</Text>
+                </TouchableOpacity>
                 <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
                     <Text style={styles.cancelButtonText}>Cancel Request</Text>
                 </TouchableOpacity>
@@ -311,6 +317,18 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontWeight: '600',
         marginBottom: 15,
+    },
+    confirmButton: {
+        backgroundColor: '#2D7C4F',
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    confirmButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#FFFFFF',
     },
     cancelButton: {
         borderWidth: 2,

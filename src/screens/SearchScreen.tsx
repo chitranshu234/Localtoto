@@ -6,8 +6,9 @@ import {
     StyleSheet,
     StatusBar,
     FlatList,
+    TextInput,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import LocationService from '../services/LocationService';
 
@@ -36,7 +37,7 @@ const SearchScreen = ({ navigation, route }: any) => {
         heading?: number | null;
         speed?: number | null;
     } | null>(null);
-    const [activeTab, setActiveTab] = useState("home"); // 👈 NEW (Current tab state)
+
 
     useEffect(() => {
         checkPermission();
@@ -63,16 +64,23 @@ const SearchScreen = ({ navigation, route }: any) => {
         }
     };
 
-    const goToMap = (type: 'pickup' | 'drop', location?: any) => {
-        // Navigate to signup screen to collect phone number before showing map
-        navigation.navigate('signup', {
+    const goToFindingDriver = (type: 'pickup' | 'drop', location?: any) => {
+        // Navigate to confirm screen
+        navigation.navigate('ConfirmTabs', {
             type,
-            initialLocation: location || null,
-            onLocationSelect: (selected: any) => {
-                if (type === 'pickup') setPickupQuery(selected.title || "Selected Location");
-                else setDropQuery(selected.title || "Selected Location");
-            }
+            location: location || currentLocation,
         });
+    };
+
+    // Handle search/go button press for destination
+    const handleSearch = () => {
+        if (dropQuery.trim()) {
+            navigation.navigate('ConfirmTabs', {
+                pickupLocation: currentLocation,
+                pickupQuery: pickupQuery || 'Current Location',
+                dropQuery: dropQuery,
+            });
+        }
     };
 
     const renderResultItem = ({ item }: any) => (
@@ -80,7 +88,7 @@ const SearchScreen = ({ navigation, route }: any) => {
             style={styles.resultItem}
             onPress={() => {
                 setDropQuery(item.title);
-                navigation.navigate("Confirm", {
+                navigation.navigate("ConfirmTabs", {
                     pickupLocation: currentLocation,
                     dropLocation: item
                 });
@@ -94,12 +102,12 @@ const SearchScreen = ({ navigation, route }: any) => {
                 <Text style={styles.resultAddress}>{item.address}</Text>
             </View>
 
-            <TouchableOpacity onPress={() => goToMap("drop", item)}>
+            <TouchableOpacity onPress={() => goToFindingDriver("drop", item)}>
                 <Icon name="map-o" size={18} color="#2D7C4F" />
             </TouchableOpacity>
         </TouchableOpacity>
     );
-    const insets = useSafeAreaInsets()
+
     return (
         <SafeAreaView style={styles.safeArea}>
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
@@ -115,19 +123,35 @@ const SearchScreen = ({ navigation, route }: any) => {
                     <Text style={styles.headerTitle}>Where to?</Text>
                 </View>
 
-                {/* Pickup */}
-                <TouchableOpacity style={styles.searchBar} onPress={() => goToMap("pickup")}>
+                {/* Pickup - Editable */}
+                <View style={styles.searchBar}>
                     <View style={styles.greenDot} />
-                    <Text style={styles.locationText}>{pickupQuery || "Pickup location"}</Text>
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Pickup location"
+                        placeholderTextColor="#999"
+                        value={pickupQuery}
+                        onChangeText={setPickupQuery}
+                    />
                     <Icon name="map-marker" size={18} color="#2D7C4F" />
-                </TouchableOpacity>
+                </View>
 
-                {/* Drop */}
-                <TouchableOpacity style={[styles.searchBar, { marginTop: 12 }]} onPress={() => goToMap("drop")}>
+                {/* Drop - Editable with search action */}
+                <View style={[styles.searchBar, { marginTop: 12 }]}>
                     <View style={styles.redDot} />
-                    <Text style={styles.locationText}>{dropQuery || "Where to?"}</Text>
-                    <Icon name="search" size={18} color="#999" />
-                </TouchableOpacity>
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Where to?"
+                        placeholderTextColor="#999"
+                        value={dropQuery}
+                        onChangeText={setDropQuery}
+                        returnKeyType="search"
+                        onSubmitEditing={handleSearch}
+                    />
+                    <TouchableOpacity onPress={handleSearch}>
+                        <Icon name="search" size={18} color="#2D7C4F" />
+                    </TouchableOpacity>
+                </View>
 
                 {/* Saved */}
                 <View style={styles.savedLocationsContainer}>
@@ -151,64 +175,6 @@ const SearchScreen = ({ navigation, route }: any) => {
                 />
 
             </View>
-
-            {/* BOTTOM TABS */}
-            {/* BOTTOM TABS */}
-            <View style={[styles.bottomTabs, { paddingBottom: insets?.bottom }]}>
-
-                {/* HOME */}
-                <TouchableOpacity
-                    style={styles.tab}
-                    onPress={() => navigation.navigate("SearchScreen")}  // or any home screen
-                >
-                    <Icon
-                        name="home"
-                        size={22}
-                        color={activeTab === "home" ? "#2D7C4F" : "#777"}
-                    />
-                    <Text style={[styles.tabText, activeTab === "home" && styles.activeTabText]}>
-                        Home
-                    </Text>
-                </TouchableOpacity>
-
-                {/* RIDES -> TripHistory */}
-                <TouchableOpacity
-                    style={styles.tab}
-                    onPress={() => {
-                        setActiveTab("rides");
-                        navigation.navigate("TripHistory");
-                    }}
-                >
-                    <Icon
-                        name="car"
-                        size={22}
-                        color={activeTab === "rides" ? "#2D7C4F" : "#777"}
-                    />
-                    <Text style={[styles.tabText, activeTab === "rides" && styles.activeTabText]}>
-                        Rides
-                    </Text>
-                </TouchableOpacity>
-
-                {/* PROFILE */}
-                <TouchableOpacity
-                    style={styles.tab}
-                    onPress={() => {
-                        setActiveTab("profile");
-                        navigation.navigate("Profile");
-                    }}
-                >
-                    <Icon
-                        name="user"
-                        size={22}
-                        color={activeTab === "profile" ? "#2D7C4F" : "#777"}
-                    />
-                    <Text style={[styles.tabText, activeTab === "profile" && styles.activeTabText]}>
-                        Profile
-                    </Text>
-                </TouchableOpacity>
-
-            </View>
-
 
         </SafeAreaView>
     );
@@ -278,6 +244,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "#333",
     },
+    searchInput: {
+        flex: 1,
+        fontSize: 16,
+        color: "#333",
+        paddingVertical: 0,
+    },
 
     /* SAVED */
     savedLocationsContainer: {
@@ -336,30 +308,7 @@ const styles = StyleSheet.create({
         color: "#777",
     },
 
-    /* BOTTOM TABS */
-    bottomTabs: {
-        flexDirection: "row",
-        justifyContent: "space-around",
-        paddingVertical: 12,
-        backgroundColor: "#FFF",
-        borderTopWidth: 1,
-        borderTopColor: "#EEE", position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-    },
-    tab: {
-        alignItems: "center",
-    },
-    tabText: {
-        fontSize: 12,
-        color: "#777",
-        marginTop: 4,
-    },
-    activeTabText: {
-        color: "#2D7C4F",
-        fontWeight: "600",
-    },
+
 });
 
 export default SearchScreen;
