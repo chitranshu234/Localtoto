@@ -157,6 +157,7 @@ const MainNavigator = () => {
                 }}
             />
 
+
             {/* Profile & Settings - Modal/Stack screens */}
             <AppStack.Screen
                 name="EditProfile"

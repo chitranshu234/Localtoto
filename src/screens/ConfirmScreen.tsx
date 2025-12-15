@@ -10,10 +10,14 @@ import {
     StatusBar,
     TextInput,
     SafeAreaView,
+    Modal,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Button from '../components/Button';
+
 const { width } = Dimensions.get('window');
+
 const VEHICLES = [
     {
         id: '1',
@@ -22,6 +26,7 @@ const VEHICLES = [
         eta: '2 min',
         capacity: '1 seat',
         image: require('../assets/bike-removebg-preview.png'),
+        hasShared: false,
     },
     {
         id: '2',
@@ -30,6 +35,7 @@ const VEHICLES = [
         eta: '4 min',
         capacity: '2 seats',
         image: require('../assets/e_rickshaw-removebg-preview.png'),
+        hasShared: true,
     },
     {
         id: '3',
@@ -38,26 +44,54 @@ const VEHICLES = [
         eta: '6 min',
         capacity: '4 seats',
         image: require('../assets/auto_rickshaw-removebg-preview.png'),
+        hasShared: true,
     },
 ];
+
 const ConfirmScreen = ({ navigation }: any) => {
     const [selectedVehicle, setSelectedVehicle] = useState(VEHICLES[0].id);
     const [paymentMethod, setPaymentMethod] = useState('cash');
     const [promoCode, setPromoCode] = useState('');
-    const [pickupLocation, setPickupLocation] = useState('Current Location');
-    const [dropLocation, setDropLocation] = useState('Central Mall');
-    const handleConfirm = () => {
-        console.log('Ride Confirmed');
-        console.log('Selected Vehicle:', selectedVehicle);
-        console.log('Payment Method:', paymentMethod);
-        console.log('Promo Code:', promoCode);
-        navigation.navigate('FindingDriverTabs');
+    const [pickupLocation] = useState('Current Location');
+    const [dropLocation] = useState('Central Mall');
+    const [showRideTypeModal, setShowRideTypeModal] = useState(false);
+    const [selectedRideType, setSelectedRideType] = useState<'solo' | 'shared' | 'schedule'>('solo');
+    const [showBikeMessage, setShowBikeMessage] = useState(false);
+
+    const handleVehicleSelect = (vehicleId: string) => {
+        setSelectedVehicle(vehicleId);
+        const vehicle = VEHICLES.find(v => v.id === vehicleId);
+
+        if (vehicle?.name === 'Bike') {
+            setShowBikeMessage(true);
+            setTimeout(() => setShowBikeMessage(false), 2500);
+            setSelectedRideType('solo');
+        } else {
+            setShowRideTypeModal(true);
+        }
     };
+
+    const handleRideTypeSelect = (rideType: 'solo' | 'shared' | 'schedule') => {
+        setSelectedRideType(rideType);
+        setShowRideTypeModal(false);
+    };
+
+    const handleConfirm = () => {
+        navigation.navigate('FindingDriverTabs', {
+            pickup: pickupLocation,
+            dropoff: dropLocation,
+            vehicle: selectedVehicle,
+            rideType: selectedRideType,
+            paymentMethod: paymentMethod,
+        });
+    };
+
     const paymentMethods = [
         { key: 'cash', label: 'Cash', icon: 'money' },
         { key: 'upi', label: 'UPI', icon: 'mobile' },
         { key: 'card', label: 'Card', icon: 'credit-card' },
     ];
+
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
@@ -112,7 +146,7 @@ const ConfirmScreen = ({ navigation }: any) => {
                                 styles.vehicleCard,
                                 selectedVehicle === vehicle.id && styles.selectedCard,
                             ]}
-                            onPress={() => setSelectedVehicle(vehicle.id)}
+                            onPress={() => handleVehicleSelect(vehicle.id)}
                         >
                             <View style={styles.vehicleImageContainer}>
                                 <Image
@@ -135,6 +169,13 @@ const ConfirmScreen = ({ navigation }: any) => {
                                 styles.vehiclePrice,
                                 selectedVehicle === vehicle.id && styles.selectedPriceText
                             ]}>{vehicle.price}</Text>
+                            {selectedVehicle === vehicle.id && (
+                                <View style={styles.rideTypeBadge}>
+                                    <Text style={styles.rideTypeBadgeText}>
+                                        {selectedRideType === 'solo' ? 'Solo' : selectedRideType === 'shared' ? 'Shared' : 'Schedule'}
+                                    </Text>
+                                </View>
+                            )}
                         </TouchableOpacity>
                     ))}
                 </ScrollView>
@@ -190,9 +231,100 @@ const ConfirmScreen = ({ navigation }: any) => {
                     />
                 </View>
             </View>
+
+            {/* Ride Type Selection Modal */}
+            <Modal
+                visible={showRideTypeModal}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowRideTypeModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHandle} />
+                        <Text style={styles.modalTitle}>Choose Ride Type</Text>
+                        <Text style={styles.modalSubtitle}>Select how you want to travel</Text>
+
+                        {/* Solo Option */}
+                        <TouchableOpacity
+                            style={[
+                                styles.rideTypeOption,
+                                selectedRideType === 'solo' && styles.rideTypeOptionSelected,
+                            ]}
+                            onPress={() => handleRideTypeSelect('solo')}
+                        >
+                            <View style={styles.rideTypeLeft}>
+                                <Ionicons name="person" size={24} color={selectedRideType === 'solo' ? '#219653' : '#666'} />
+                                <View style={styles.rideTypeTextContainer}>
+                                    <Text style={[styles.rideTypeName, selectedRideType === 'solo' && styles.rideTypeNameSelected]}>Solo</Text>
+                                    <Text style={styles.rideTypeDesc}>Private ride, just for you</Text>
+                                </View>
+                            </View>
+                            <View style={[styles.radioOuter, selectedRideType === 'solo' && styles.radioOuterSelected]}>
+                                {selectedRideType === 'solo' && <View style={styles.radioInner} />}
+                            </View>
+                        </TouchableOpacity>
+
+                        {/* Shared Option */}
+                        <TouchableOpacity
+                            style={[
+                                styles.rideTypeOption,
+                                selectedRideType === 'shared' && styles.rideTypeOptionSelected,
+                            ]}
+                            onPress={() => handleRideTypeSelect('shared')}
+                        >
+                            <View style={styles.rideTypeLeft}>
+                                <Ionicons name="people" size={24} color={selectedRideType === 'shared' ? '#219653' : '#666'} />
+                                <View style={styles.rideTypeTextContainer}>
+                                    <Text style={[styles.rideTypeName, selectedRideType === 'shared' && styles.rideTypeNameSelected]}>Shared</Text>
+                                    <Text style={styles.rideTypeDesc}>Share ride & save money</Text>
+                                </View>
+                            </View>
+                            <View style={[styles.radioOuter, selectedRideType === 'shared' && styles.radioOuterSelected]}>
+                                {selectedRideType === 'shared' && <View style={styles.radioInner} />}
+                            </View>
+                        </TouchableOpacity>
+
+                        {/* Schedule Option */}
+                        <TouchableOpacity
+                            style={[
+                                styles.rideTypeOption,
+                                selectedRideType === 'schedule' && styles.rideTypeOptionSelected,
+                            ]}
+                            onPress={() => handleRideTypeSelect('schedule')}
+                        >
+                            <View style={styles.rideTypeLeft}>
+                                <Ionicons name="time-outline" size={24} color={selectedRideType === 'schedule' ? '#219653' : '#666'} />
+                                <View style={styles.rideTypeTextContainer}>
+                                    <Text style={[styles.rideTypeName, selectedRideType === 'schedule' && styles.rideTypeNameSelected]}>Schedule</Text>
+                                    <Text style={styles.rideTypeDesc}>Book for later</Text>
+                                </View>
+                            </View>
+                            <View style={[styles.radioOuter, selectedRideType === 'schedule' && styles.radioOuterSelected]}>
+                                {selectedRideType === 'schedule' && <View style={styles.radioInner} />}
+                            </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.modalConfirmButton} onPress={() => setShowRideTypeModal(false)}>
+                            <Text style={styles.modalConfirmButtonText}>Continue</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Bike Only Solo Message */}
+            {showBikeMessage && (
+                <View style={styles.bikeMessageContainer}>
+                    <View style={styles.bikeMessageContent}>
+                        <Ionicons name="information-circle" size={24} color="#219653" />
+                        <Text style={styles.bikeMessageText}>Bike only has Solo ride option</Text>
+                    </View>
+                </View>
+            )}
         </SafeAreaView>
     );
 };
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -367,6 +499,18 @@ const styles = StyleSheet.create({
     selectedPriceText: {
         color: '#219653',
     },
+    rideTypeBadge: {
+        marginTop: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        backgroundColor: '#219653',
+        borderRadius: 12,
+    },
+    rideTypeBadgeText: {
+        color: '#FFFFFF',
+        fontSize: 11,
+        fontWeight: '600',
+    },
     paymentContainer: {
         marginBottom: 20,
     },
@@ -445,5 +589,128 @@ const styles = StyleSheet.create({
         backgroundColor: '#219653',
         borderWidth: 0,
     },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: '#FFFFFF',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        paddingHorizontal: 24,
+        paddingTop: 16,
+        paddingBottom: 32,
+    },
+    modalHandle: {
+        width: 40,
+        height: 5,
+        backgroundColor: '#E0E0E0',
+        borderRadius: 3,
+        alignSelf: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: '#1F2937',
+        marginBottom: 8,
+    },
+    modalSubtitle: {
+        fontSize: 14,
+        color: '#6B7280',
+        marginBottom: 24,
+    },
+    rideTypeOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#E5E7EB',
+        marginBottom: 12,
+        backgroundColor: '#FFFFFF',
+    },
+    rideTypeOptionSelected: {
+        borderColor: '#219653',
+        backgroundColor: '#F0FFF4',
+    },
+    rideTypeLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    rideTypeTextContainer: {
+        marginLeft: 16,
+    },
+    rideTypeName: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1F2937',
+        marginBottom: 2,
+    },
+    rideTypeNameSelected: {
+        color: '#166534',
+    },
+    rideTypeDesc: {
+        fontSize: 13,
+        color: '#6B7280',
+    },
+    radioOuter: {
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        borderWidth: 2,
+        borderColor: '#D1D5DB',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    radioOuterSelected: {
+        borderColor: '#219653',
+    },
+    radioInner: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: '#219653',
+    },
+    modalConfirmButton: {
+        backgroundColor: '#219653',
+        borderRadius: 12,
+        paddingVertical: 16,
+        alignItems: 'center',
+        marginTop: 16,
+    },
+    modalConfirmButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    bikeMessageContainer: {
+        position: 'absolute',
+        bottom: 120,
+        left: 20,
+        right: 20,
+    },
+    bikeMessageContent: {
+        backgroundColor: '#FFFFFF',
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    bikeMessageText: {
+        marginLeft: 12,
+        fontSize: 14,
+        color: '#333',
+        fontWeight: '500',
+        flex: 1,
+    },
 });
+
 export default ConfirmScreen;
