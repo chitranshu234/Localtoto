@@ -55,17 +55,16 @@ const ConfirmScreen = ({ navigation }: any) => {
     const [pickupLocation] = useState('Current Location');
     const [dropLocation] = useState('Central Mall');
     const [showRideTypeModal, setShowRideTypeModal] = useState(false);
+    const [showBikeModal, setShowBikeModal] = useState(false);
     const [selectedRideType, setSelectedRideType] = useState<'solo' | 'shared' | 'schedule'>('solo');
-    const [showBikeMessage, setShowBikeMessage] = useState(false);
 
     const handleVehicleSelect = (vehicleId: string) => {
         setSelectedVehicle(vehicleId);
         const vehicle = VEHICLES.find(v => v.id === vehicleId);
 
         if (vehicle?.name === 'Bike') {
-            setShowBikeMessage(true);
-            setTimeout(() => setShowBikeMessage(false), 2500);
             setSelectedRideType('solo');
+            setShowBikeModal(true);
         } else {
             setShowRideTypeModal(true);
         }
@@ -74,6 +73,11 @@ const ConfirmScreen = ({ navigation }: any) => {
     const handleRideTypeSelect = (rideType: 'solo' | 'shared' | 'schedule') => {
         setSelectedRideType(rideType);
         setShowRideTypeModal(false);
+    };
+
+    const handleBikeRideTypeSelect = (rideType: 'solo' | 'schedule') => {
+        setSelectedRideType(rideType);
+        setShowBikeModal(false);
     };
 
     const handleConfirm = () => {
@@ -232,7 +236,7 @@ const ConfirmScreen = ({ navigation }: any) => {
                 </View>
             </View>
 
-            {/* Ride Type Selection Modal */}
+            {/* Ride Type Selection Modal for Toto/E-Rickshaw */}
             <Modal
                 visible={showRideTypeModal}
                 transparent
@@ -312,15 +316,68 @@ const ConfirmScreen = ({ navigation }: any) => {
                 </View>
             </Modal>
 
-            {/* Bike Only Solo Message */}
-            {showBikeMessage && (
-                <View style={styles.bikeMessageContainer}>
-                    <View style={styles.bikeMessageContent}>
-                        <Ionicons name="information-circle" size={24} color="#219653" />
-                        <Text style={styles.bikeMessageText}>Bike only has Solo ride option</Text>
+            {/* Bike Modal - Solo + Schedule with note */}
+            <Modal
+                visible={showBikeModal}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowBikeModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHandle} />
+                        <Text style={styles.modalTitle}>Choose Ride Type</Text>
+                        <Text style={styles.bikeNote}>
+                            <Ionicons name="information-circle-outline" size={14} color="#888" />
+                            {' '}Bike supports only Solo ride
+                        </Text>
+
+                        {/* Solo Option - Always selected for bike */}
+                        <TouchableOpacity
+                            style={[
+                                styles.rideTypeOption,
+                                selectedRideType === 'solo' && styles.rideTypeOptionSelected,
+                            ]}
+                            onPress={() => handleBikeRideTypeSelect('solo')}
+                        >
+                            <View style={styles.rideTypeLeft}>
+                                <Ionicons name="person" size={24} color={selectedRideType === 'solo' ? '#219653' : '#666'} />
+                                <View style={styles.rideTypeTextContainer}>
+                                    <Text style={[styles.rideTypeName, selectedRideType === 'solo' && styles.rideTypeNameSelected]}>Solo</Text>
+                                    <Text style={styles.rideTypeDesc}>Private ride, just for you</Text>
+                                </View>
+                            </View>
+                            <View style={[styles.radioOuter, selectedRideType === 'solo' && styles.radioOuterSelected]}>
+                                {selectedRideType === 'solo' && <View style={styles.radioInner} />}
+                            </View>
+                        </TouchableOpacity>
+
+                        {/* Schedule Option */}
+                        <TouchableOpacity
+                            style={[
+                                styles.rideTypeOption,
+                                selectedRideType === 'schedule' && styles.rideTypeOptionSelected,
+                            ]}
+                            onPress={() => handleBikeRideTypeSelect('schedule')}
+                        >
+                            <View style={styles.rideTypeLeft}>
+                                <Ionicons name="time-outline" size={24} color={selectedRideType === 'schedule' ? '#219653' : '#666'} />
+                                <View style={styles.rideTypeTextContainer}>
+                                    <Text style={[styles.rideTypeName, selectedRideType === 'schedule' && styles.rideTypeNameSelected]}>Schedule</Text>
+                                    <Text style={styles.rideTypeDesc}>Book for later</Text>
+                                </View>
+                            </View>
+                            <View style={[styles.radioOuter, selectedRideType === 'schedule' && styles.radioOuterSelected]}>
+                                {selectedRideType === 'schedule' && <View style={styles.radioInner} />}
+                            </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.modalConfirmButton} onPress={() => setShowBikeModal(false)}>
+                            <Text style={styles.modalConfirmButtonText}>Continue</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
-            )}
+            </Modal>
         </SafeAreaView>
     );
 };
@@ -621,6 +678,12 @@ const styles = StyleSheet.create({
         color: '#6B7280',
         marginBottom: 24,
     },
+    bikeNote: {
+        fontSize: 13,
+        color: '#888',
+        marginBottom: 20,
+        fontStyle: 'italic',
+    },
     rideTypeOption: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -685,31 +748,6 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 16,
         fontWeight: '700',
-    },
-    bikeMessageContainer: {
-        position: 'absolute',
-        bottom: 120,
-        left: 20,
-        right: 20,
-    },
-    bikeMessageContent: {
-        backgroundColor: '#FFFFFF',
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-        borderRadius: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 8,
-    },
-    bikeMessageText: {
-        marginLeft: 12,
-        fontSize: 14,
-        color: '#333',
-        fontWeight: '500',
-        flex: 1,
     },
 });
 
