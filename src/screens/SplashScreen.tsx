@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Animated, StyleSheet, Dimensions, Easing } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchUserProfile } from '../store/slices/authSlice';
+import { fetchUserProfile, logout } from '../store/slices/authSlice';
 
 const { width, height } = Dimensions.get('window');
 
@@ -51,15 +51,45 @@ const SplashScreen = ({ navigation }: any) => {
             try {
                 // First check AsyncStorage directly
                 let accessToken = await AsyncStorage.getItem('access_token');
+                const refreshToken = await AsyncStorage.getItem('refresh_token');
 
-                console.log('🔍 Checking auth state:', { accessToken: !!accessToken, reduxAuthenticated: isAuthenticated });
+                console.log('🔍 Checking auth state:', {
+                    hasAccessToken: !!accessToken,
+                    hasRefreshToken: !!refreshToken,
+                    reduxAuthenticated: isAuthenticated
+                });
 
-                // If Redux says we're authenticated but AsyncStorage has no token,
-                // it means redux-persist rehydrated but we need to sync the token
-                if (!accessToken && isAuthenticated && user) {
-                    console.log('🔄 Syncing token from Redux to AsyncStorage...');
-                    // The token might be in Redux state already from redux-persist
-                    // We'll let the fetchUserProfile handle this
+                // If no access token but we have a refresh token, try to refresh
+                if (!accessToken && refreshToken) {
+                    console.log('🔄 Access token missing, attempting refresh...');
+                    try {
+                        const response = await fetch(
+                            'https://django-backend-production-43a6.up.railway.app/api/users/refresh',
+                            {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ refresh: refreshToken }),
+                            }
+                        );
+                        const data = await response.json();
+
+                        if (data.token) {
+                            console.log('✅ Token refreshed successfully!');
+                            await AsyncStorage.setItem('access_token', data.token);
+                            accessToken = data.token;
+                        } else {
+                            console.log('❌ Token refresh failed - response:', data);
+                        }
+                    } catch (refreshError) {
+                        console.error('❌ Token refresh error:', refreshError);
+                    }
+                }
+
+                // If still no token and Redux says authenticated, force logout
+                if (!accessToken && isAuthenticated) {
+                    console.log('🔄 No valid token - forcing logout...');
+                    dispatch(logout());
+                    return;
                 }
 
                 // If we have a token, try to load user profile
@@ -68,19 +98,14 @@ const SplashScreen = ({ navigation }: any) => {
                         console.log('✅ Token found, fetching user profile...');
                         await dispatch(fetchUserProfile()).unwrap();
                         console.log('✅ User profile loaded - AppNavigator will show App stack');
-                        // Navigation happens automatically - AppNavigator sees isAuthenticated=true
-                    } catch (error) {
-                        console.error('❌ Failed to load user profile:', error);
-                        // Token is invalid, clear it
-                        await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
-                        console.log('🔄 Cleared invalid tokens - AppNavigator will show Auth stack');
-                        // Navigation happens automatically - AppNavigator sees isAuthenticated=false
+                    } catch (error: any) {
+                        console.warn('⚠️ Profile fetch failed:', error);
+                        // Don't logout here - the Axios interceptor will handle 401s
                     }
                 }
 
-                // Wait for splash animation to complete before letting AppNavigator take over
+                // Wait for splash animation to complete
                 setTimeout(() => {
-                    // AppNavigator's conditional rendering will automatically show the right stack
                     console.log('✅ Splash complete - AppNavigator will navigate based on auth state');
                 }, 2500);
             } catch (error) {

@@ -10,20 +10,43 @@ const client = axios.create({
     },
 });
 
-// Request Interceptor
+// Request Interceptor - Auto refresh token if missing
 client.interceptors.request.use(
     async (config) => {
-        const token = await AsyncStorage.getItem('access_token');
+        let token = await AsyncStorage.getItem('access_token');
+
+        // If no access token, try to refresh
+        if (!token) {
+            const refreshToken = await AsyncStorage.getItem('refresh_token');
+            if (refreshToken) {
+                console.log('🔄 No access token, attempting refresh...');
+                try {
+                    const response = await axios.post(`${BASE_URL}/users/refresh`, {
+                        refresh: refreshToken,
+                    });
+                    // Backend returns 'access' (or sometimes 'token')
+                    const newToken = response.data.access || response.data.token;
+                    if (newToken) {
+                        token = newToken;
+                        await AsyncStorage.setItem('access_token', token!);
+                        if (response.data.refresh) {
+                            await AsyncStorage.setItem('refresh_token', response.data.refresh);
+                        }
+                        console.log('✅ Token refreshed successfully!');
+                    }
+                } catch (err) {
+                    console.log('❌ Token refresh failed in request interceptor');
+                }
+            }
+        }
+
         console.log('🔍 TOKEN CHECK:', token ? 'Token found' : 'No token');
-        console.log('🔍 TOKEN VALUE:', token);
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
         // Debug logging
         console.log('🔵 REQUEST:', config.method?.toUpperCase(), config.url);
         console.log('🔵 REQUEST DATA:', JSON.stringify(config.data));
-        console.log('🔵 REQUEST HEADERS:', JSON.stringify(config.headers));
-        console.log('🔵 AUTHORIZATION HEADER:', config.headers.Authorization);
         return config;
     },
     (error) => {
@@ -37,32 +60,53 @@ client.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
+        console.log('🔴 API Error:', error.response?.status, error.config?.url);
+        console.log('🔴 Error Data:', JSON.stringify(error.response?.data));
+
         // Prevent infinite loops
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
+            console.log('🔄 401 Error - Attempting token refresh...');
 
             try {
                 const refreshToken = await AsyncStorage.getItem('refresh_token');
+                console.log('🔄 Refresh token:', refreshToken ? 'Present' : 'MISSING');
+
                 if (!refreshToken) {
-                    // No refresh token, logout user
-                    await handleLogout();
+                    // No refresh token - but don't auto logout, let UI handle it
+                    console.log('❌ No refresh token available - cannot refresh');
                     return Promise.reject(error);
                 }
 
                 // Call refresh endpoint directly to avoid interceptor loop
+                console.log('🔄 Calling refresh endpoint...');
                 const response = await axios.post(`${BASE_URL}/users/refresh`, {
                     refresh: refreshToken,
                 });
 
-                const { token } = response.data;
-                await AsyncStorage.setItem('access_token', token);
+                console.log('✅ Refresh response:', JSON.stringify(response.data));
+                // Backend returns 'access' (or sometimes 'token')
+                const newAccessToken = response.data.access || response.data.token;
+                const newRefreshToken = response.data.refresh;
 
-                // Update header and retry original request
-                originalRequest.headers.Authorization = `Bearer ${token}`;
-                return client(originalRequest);
-            } catch (refreshError) {
-                // Refresh failed, logout user
-                await handleLogout();
+                if (newAccessToken) {
+                    await AsyncStorage.setItem('access_token', newAccessToken);
+                    if (newRefreshToken) {
+                        await AsyncStorage.setItem('refresh_token', newRefreshToken);
+                    }
+                    console.log('✅ New tokens saved');
+
+                    // Update header and retry original request
+                    originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                    return client(originalRequest);
+                } else {
+                    console.log('❌ No token in refresh response');
+                    return Promise.reject(error);
+                }
+            } catch (refreshError: any) {
+                // Refresh failed - log but don't auto logout
+                console.log('❌ Token refresh failed:', refreshError.response?.status, refreshError.response?.data);
+                // Don't call handleLogout() here - let the app handle auth state
                 return Promise.reject(refreshError);
             }
         }

@@ -1,167 +1,620 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     Animated,
     TouchableOpacity,
-    SafeAreaView,
     StatusBar,
     Dimensions,
+    Alert,
+    Easing,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import Button from '../components/Button';
-const { width } = Dimensions.get('window');
-const FindingDriverScreen = ({ navigation }: any) => {
-    const pulse1 = useRef(new Animated.Value(0)).current;
-    const pulse2 = useRef(new Animated.Value(0)).current;
-    const pulse3 = useRef(new Animated.Value(0)).current;
-    useEffect(() => {
-        const createPulse = (animValue: Animated.Value, delay: number) => {
-            return Animated.loop(
-                Animated.sequence([
-                    Animated.delay(delay),
-                    Animated.timing(animValue, {
-                        toValue: 1,
-                        duration: 2000,
-                        useNativeDriver: true,
-                    }),
-                    Animated.timing(animValue, {
-                        toValue: 0,
-                        duration: 0,
-                        useNativeDriver: true,
-                    }),
-                ])
-            );
-        };
-        Animated.parallel([
-            createPulse(pulse1, 0),
-            createPulse(pulse2, 400),
-            createPulse(pulse3, 800),
-        ]).start();
-    }, [pulse1, pulse2, pulse3]);
-    const handleCancel = () => {
-        console.log('Ride request cancelled');
-        navigation.goBack();
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import Mapbox, { Camera, PointAnnotation, ShapeSource, LineLayer } from '@rnmapbox/maps';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+// Redux
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { getRideDetails, cancelRide, clearRide } from '../store/slices/rideSlice';
+
+const { width, height } = Dimensions.get('window');
+
+// Mapbox Access Token
+const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiYWRhcnNobWlzaHJhNTYzIiwiYSI6ImNtZjlocXQydzBrZmYycnNqNGs5OTk3cXUifQ.jwUMhX7pbAGl7fI9rXt7mw';
+Mapbox.setAccessToken(MAPBOX_ACCESS_TOKEN);
+
+// Vehicle icon mapping
+const VEHICLE_ICONS: { [key: string]: string } = {
+    '1': 'motorcycle',
+    '2': 'car',
+    '3': 'car',
+};
+
+const VEHICLE_NAMES: { [key: string]: string } = {
+    '1': 'Bike',
+    '2': 'E-Rickshaw',
+    '3': 'Toto',
+};
+
+interface Driver {
+    id: string;
+    name: string;
+    rating: number;
+    coordinates: [number, number];
+    originalCoordinates: [number, number];
+    vehicleNumber: string;
+    vehicleType: string;
+}
+
+const FindingDriverScreen = ({ navigation, route }: any) => {
+    // Get params from ConfirmScreen
+    const routeParams = route?.params || {};
+    const pickup = routeParams.pickup || { address: 'Current Location', latitude: 29.0333, longitude: 79.4833 };
+    const dropoff = routeParams.dropoff || { address: 'Destination', latitude: 29.0400, longitude: 79.4900 };
+    const selectedVehicle = routeParams.vehicle || '1';
+    const fare = routeParams.fare || 25;
+    const rideType = routeParams.rideType || 'solo';
+    const rideId = routeParams.rideId; // From booking API
+    const startOtp = routeParams.startOtp; // OTP to show driver
+
+    // Redux
+    const dispatch = useAppDispatch();
+    const { driver: apiDriver, driverLocation: apiDriverLocation, rideStatus, isDriverNear, hasDriverArrived } = useAppSelector(state => state.ride);
+
+    // State
+    const [routeCoordinates, setRouteCoordinates] = useState<any[]>([]);
+    const [nearbyDrivers, setNearbyDrivers] = useState<Driver[]>([]);
+    const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+    const [driverArrived, setDriverArrived] = useState(false);
+    const [movingDriverCoords, setMovingDriverCoords] = useState<[number, number] | null>(null);
+    const [searchingText, setSearchingText] = useState('Finding your driver...');
+
+    // Ride phase state: searching → driver_found → arriving → in_progress → arrived
+    const [ridePhase, setRidePhase] = useState<'searching' | 'driver_found' | 'arriving' | 'in_progress' | 'arrived'>('searching');
+    const [rideTimer, setRideTimer] = useState(0); // Timer in seconds
+
+    // Refs
+    const cameraRef = useRef<any>(null);
+    const animationRef = useRef<any>(null);
+
+    // Animations
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+    const driverPulseAnim = useRef(new Animated.Value(1)).current;
+    const searchDotsAnim = useRef(new Animated.Value(0)).current;
+
+    // Format timer
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
+
+    // Generate mock drivers near pickup
+    const generateMockDrivers = (lat: number, lng: number): Driver[] => {
+        const drivers: Driver[] = [];
+        const driverNames = ['Ramesh K.', 'Suresh P.', 'Anil S.', 'Vikram M.'];
+        const vehicleTypes = ['Bike', 'E-Rickshaw', 'Toto'];
+
+        for (let i = 0; i < 4; i++) {
+            const offsetLat = (Math.random() - 0.5) * 0.015;
+            const offsetLng = (Math.random() - 0.5) * 0.015;
+            const coords: [number, number] = [lng + offsetLng, lat + offsetLat];
+
+            drivers.push({
+                id: `driver-${i}`,
+                name: driverNames[i],
+                rating: 4.5 + Math.random() * 0.5,
+                coordinates: coords,
+                originalCoordinates: coords,
+                vehicleNumber: `UK 07 ${1000 + Math.floor(Math.random() * 9000)}`,
+                vehicleType: vehicleTypes[i % 3],
+            });
+        }
+        return drivers;
+    };
+
+    // Calculate route
+    const calculateRoute = async () => {
+        try {
+            const response = await fetch(
+                `https://api.mapbox.com/directions/v5/mapbox/driving/` +
+                `${pickup.longitude},${pickup.latitude};` +
+                `${dropoff.longitude},${dropoff.latitude}?` +
+                `geometries=geojson&access_token=${MAPBOX_ACCESS_TOKEN}`
+            );
+            const data = await response.json();
+
+            if (data.routes && data.routes.length > 0) {
+                setRouteCoordinates(data.routes[0].geometry.coordinates);
+            }
+        } catch (error) {
+            console.error('Route calculation error:', error);
+            setRouteCoordinates([
+                [pickup.longitude, pickup.latitude],
+                [dropoff.longitude, dropoff.latitude],
+            ]);
+        }
+    };
+
+    // Adjust camera to fit points
+    const adjustCameraToFitPoints = () => {
+        const pointsToShow = [
+            [pickup.longitude, pickup.latitude],
+            [dropoff.longitude, dropoff.latitude],
+        ];
+
+        nearbyDrivers.forEach(driver => {
+            pointsToShow.push(driver.coordinates);
+        });
+
+        const lngs = pointsToShow.map(p => p[0]);
+        const lats = pointsToShow.map(p => p[1]);
+
+        const minLng = Math.min(...lngs) - 0.01;
+        const maxLng = Math.max(...lngs) + 0.01;
+        const minLat = Math.min(...lats) - 0.01;
+        const maxLat = Math.max(...lats) + 0.01;
+
+        if (cameraRef.current) {
+            cameraRef.current.fitBounds(
+                [minLng, minLat],
+                [maxLng, maxLat],
+                {
+                    padding: { top: 100, bottom: 300, left: 50, right: 50 },
+                    animationDuration: 1200,
+                }
+            );
+        }
+    };
+
+    // Start driver animation toward pickup
+    const startDriverAnimation = (driver: Driver) => {
+        if (animationRef.current) {
+            clearInterval(animationRef.current);
+        }
+
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(driverPulseAnim, {
+                    toValue: 1.3,
+                    duration: 800,
+                    easing: Easing.inOut(Easing.ease),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(driverPulseAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    easing: Easing.inOut(Easing.ease),
+                    useNativeDriver: true,
+                }),
+            ])
+        ).start();
+
+        setMovingDriverCoords(driver.originalCoordinates);
+        setRidePhase('driver_found');
+
+        const animationDuration = 8000;
+        const steps = 80;
+        const interval = animationDuration / steps;
+        let progress = 0;
+
+        animationRef.current = setInterval(() => {
+            progress += 1;
+
+            if (progress <= 100) {
+                const startLng = driver.originalCoordinates[0];
+                const startLat = driver.originalCoordinates[1];
+                const endLng = pickup.longitude;
+                const endLat = pickup.latitude;
+
+                const easeProgress = 1 - Math.pow(1 - (progress / 100), 2);
+
+                const newLng = startLng + (endLng - startLng) * easeProgress;
+                const newLat = startLat + (endLat - startLat) * easeProgress;
+
+                setMovingDriverCoords([newLng, newLat]);
+
+                // Update phase as driver approaches
+                if (progress > 30 && ridePhase === 'driver_found') {
+                    setRidePhase('arriving');
+                    setSearchingText('Driver is arriving...');
+                }
+            }
+
+            if (progress >= 100) {
+                clearInterval(animationRef.current);
+                animationRef.current = null;
+                setDriverArrived(true);
+                driverPulseAnim.stopAnimation();
+                setRidePhase('in_progress');
+                setSearchingText('Enjoy your ride!');
+            }
+        }, interval);
+    };
+
+    // Initialize
+    useEffect(() => {
+        const drivers = generateMockDrivers(pickup.latitude, pickup.longitude);
+        setNearbyDrivers(drivers);
+        calculateRoute();
+
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulseAnim, {
+                    toValue: 1.2,
+                    duration: 1000,
+                    easing: Easing.inOut(Easing.ease),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(pulseAnim, {
+                    toValue: 1,
+                    duration: 1000,
+                    easing: Easing.inOut(Easing.ease),
+                    useNativeDriver: true,
+                }),
+            ])
+        ).start();
+
+        Animated.loop(
+            Animated.timing(searchDotsAnim, {
+                toValue: 3,
+                duration: 1500,
+                useNativeDriver: false,
+            })
+        ).start();
+
+        const findDriverTimer = setTimeout(() => {
+            if (drivers.length > 0) {
+                const randomDriver = drivers[Math.floor(Math.random() * drivers.length)];
+                setSelectedDriver(randomDriver);
+                setSearchingText(`${randomDriver.name} is on the way!`);
+                startDriverAnimation(randomDriver);
+            }
+        }, 3000);
+
+        return () => {
+            clearTimeout(findDriverTimer);
+            if (animationRef.current) {
+                clearInterval(animationRef.current);
+            }
+        };
+    }, []);
+
+    // Adjust camera when route and drivers are ready
+    useEffect(() => {
+        if (routeCoordinates.length > 0 && nearbyDrivers.length > 0) {
+            setTimeout(adjustCameraToFitPoints, 500);
+        }
+    }, [routeCoordinates, nearbyDrivers]);
+
+    // Poll ride status from API
+    useEffect(() => {
+        if (!rideId) return;
+
+        const pollInterval = setInterval(() => {
+            dispatch(getRideDetails(rideId));
+        }, 5000);
+
+        dispatch(getRideDetails(rideId));
+
+        return () => clearInterval(pollInterval);
+    }, [rideId, dispatch]);
+
+    // React to API driver assignment and ride status
+    useEffect(() => {
+        if (apiDriver && rideStatus === 'accepted') {
+            setSearchingText(`${apiDriver.name} is on the way!`);
+            setRidePhase('driver_found');
+            
+            if (apiDriverLocation) {
+                setMovingDriverCoords([apiDriverLocation.lng, apiDriverLocation.lat]);
+            }
+        }
+
+        if (rideStatus === 'driver_arriving') {
+            setRidePhase('arriving');
+            setSearchingText('Driver is arriving at pickup...');
+        } else if (rideStatus === 'in_progress') {
+            setRidePhase('in_progress');
+            setSearchingText('Enjoy your ride!');
+        } else if (hasDriverArrived || rideStatus === 'arrived' || rideStatus === 'completed') {
+            setRidePhase('arrived');
+            setSearchingText('You have arrived!');
+        }
+    }, [apiDriver, rideStatus, hasDriverArrived, apiDriverLocation]);
+
+    // Timer for ride phases
+    useEffect(() => {
+        if (ridePhase === 'arriving' || ridePhase === 'in_progress') {
+            const interval = setInterval(() => {
+                setRideTimer(prev => prev + 1);
+            }, 1000);
+            return () => clearInterval(interval);
+        }
+    }, [ridePhase]);
+
+    // Navigate to Rating when ride is complete
+    useEffect(() => {
+        if (ridePhase === 'arrived') {
+            const timeout = setTimeout(() => {
+                navigation.navigate('RatingTabs', {
+                    driver: apiDriver || selectedDriver,
+                    pickup: pickup,
+                    dropoff: dropoff,
+                    fare: fare,
+                    rideId: rideId,
+                });
+            }, 2000);
+            return () => clearTimeout(timeout);
+        }
+    }, [ridePhase]);
+
+    // Route GeoJSON
+    const routeGeoJSON = useMemo(() => ({
+        type: 'Feature' as const,
+        properties: {},
+        geometry: {
+            type: 'LineString' as const,
+            coordinates: routeCoordinates,
+        },
+    }), [routeCoordinates]);
+
+    const handleCancel = () => {
+        Alert.alert(
+            'Cancel Ride',
+            'Are you sure you want to cancel this ride?',
+            [
+                { text: 'No', style: 'cancel' },
+                {
+                    text: 'Yes, Cancel',
+                    style: 'destructive',
+                    onPress: () => navigation.goBack()
+                },
+            ]
+        );
+    };
+
+    // Get current driver info
+    const currentDriver = apiDriver || selectedDriver;
+
     return (
-        <SafeAreaView style={styles.container}>
+        <GestureHandlerRootView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-            <TouchableOpacity
-                style={styles.backButton}
-                onPress={handleCancel}
-                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-            >
-                <Icon name="arrow-left" size={20} color="#2D7C4F" />
-            </TouchableOpacity>
-            <View style={styles.mapPlaceholder}>
-                <View style={styles.pulseContainer}>
-                    <Animated.View
-                        style={[
-                            styles.pulse,
-                            {
-                                opacity: pulse1.interpolate({
-                                    inputRange: [0, 1],
-                                    outputRange: [0.6, 0],
-                                }),
-                                transform: [{
-                                    scale: pulse1.interpolate({
-                                        inputRange: [0, 1],
-                                        outputRange: [1, 3],
-                                    }),
-                                }],
-                            },
-                        ]}
+
+            {/* Mapbox Map */}
+            <View style={styles.mapContainer}>
+                <Mapbox.MapView
+                    style={styles.map}
+                    styleURL={Mapbox.StyleURL.Street}
+                    logoEnabled={false}
+                    attributionEnabled={false}
+                >
+                    <Camera
+                        ref={cameraRef}
+                        zoomLevel={14}
+                        centerCoordinate={[pickup.longitude, pickup.latitude]}
+                        animationMode="flyTo"
+                        animationDuration={1000}
                     />
-                    <Animated.View
-                        style={[
-                            styles.pulse,
-                            {
-                                opacity: pulse2.interpolate({
-                                    inputRange: [0, 1],
-                                    outputRange: [0.6, 0],
-                                }),
-                                transform: [{
-                                    scale: pulse2.interpolate({
-                                        inputRange: [0, 1],
-                                        outputRange: [1, 3],
-                                    }),
-                                }],
-                            },
-                        ]}
-                    />
-                    <Animated.View
-                        style={[
-                            styles.pulse,
-                            {
-                                opacity: pulse3.interpolate({
-                                    inputRange: [0, 1],
-                                    outputRange: [0.6, 0],
-                                }),
-                                transform: [{
-                                    scale: pulse3.interpolate({
-                                        inputRange: [0, 1],
-                                        outputRange: [1, 3],
-                                    }),
-                                }],
-                            },
-                        ]}
-                    />
-                    <View style={styles.centerPin}>
-                        <Icon name="map-marker" size={36} color="#2D7C4F" />
+
+                    {/* Route Line */}
+                    {routeCoordinates.length > 0 && (
+                        <ShapeSource id="routeSource" shape={routeGeoJSON}>
+                            <LineLayer
+                                id="routeLine"
+                                style={{
+                                    lineColor: '#219653',
+                                    lineWidth: 4,
+                                    lineCap: 'round',
+                                    lineJoin: 'round',
+                                }}
+                            />
+                        </ShapeSource>
+                    )}
+
+                    {/* Pickup Marker */}
+                    <PointAnnotation
+                        id="pickup"
+                        coordinate={[pickup.longitude, pickup.latitude]}
+                    >
+                        <Animated.View style={[
+                            styles.pickupMarkerOuter,
+                            { transform: [{ scale: pulseAnim }] }
+                        ]}>
+                            <View style={styles.pickupMarker}>
+                                <View style={styles.pickupMarkerDot} />
+                            </View>
+                        </Animated.View>
+                    </PointAnnotation>
+
+                    {/* Destination Marker */}
+                    <PointAnnotation
+                        id="destination"
+                        coordinate={[dropoff.longitude, dropoff.latitude]}
+                    >
+                        <View style={styles.destinationMarker}>
+                            <Ionicons name="location" size={18} color="#fff" />
+                        </View>
+                    </PointAnnotation>
+
+                    {/* Driver Markers */}
+                    {!selectedDriver && nearbyDrivers.map(driver => (
+                        <PointAnnotation
+                            key={driver.id}
+                            id={driver.id}
+                            coordinate={driver.coordinates}
+                        >
+                            <View style={styles.driverMarker}>
+                                <Icon name="car" size={12} color="#fff" />
+                            </View>
+                        </PointAnnotation>
+                    ))}
+
+                    {/* Moving Driver (selected) */}
+                    {selectedDriver && movingDriverCoords && (
+                        <PointAnnotation
+                            id="moving-driver"
+                            coordinate={movingDriverCoords}
+                        >
+                            <Animated.View style={[
+                                styles.selectedDriverMarker,
+                                { transform: [{ scale: driverPulseAnim }] }
+                            ]}>
+                                <Icon name="car" size={14} color="#fff" />
+                            </Animated.View>
+                        </PointAnnotation>
+                    )}
+                </Mapbox.MapView>
+
+                {/* Back Button */}
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={handleCancel}
+                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                >
+                    <Icon name="arrow-left" size={20} color="#333" />
+                </TouchableOpacity>
+
+                {/* Finding Driver Overlay */}
+                <View style={styles.searchingOverlay}>
+                    <View style={styles.searchingBadge}>
+                        {ridePhase === 'searching' && (
+                            <View style={styles.loadingDots}>
+                                <View style={[styles.dot, styles.dotActive]} />
+                                <View style={[styles.dot, styles.dotActive]} />
+                                <View style={[styles.dot, styles.dotActive]} />
+                            </View>
+                        )}
+                        {ridePhase !== 'searching' && (
+                            <MaterialCommunityIcons 
+                                name={ridePhase === 'arrived' ? 'check-circle' : 'car-side'} 
+                                size={18} 
+                                color="#219653" 
+                                style={{ marginRight: 8 }}
+                            />
+                        )}
+                        <Text style={styles.searchingText}>{searchingText}</Text>
                     </View>
+                    
+                    {/* Timer for ride phases */}
+                    {(ridePhase === 'arriving' || ridePhase === 'in_progress') && (
+                        <View style={styles.timerBadge}>
+                            <Ionicons name="time-outline" size={14} color="#666" />
+                            <Text style={styles.timerText}>{formatTime(rideTimer)}</Text>
+                        </View>
+                    )}
                 </View>
-                <Text style={styles.searchingText}>Finding your driver...</Text>
-                <Text style={styles.searchingSubtext}>Please wait</Text>
             </View>
+
+            {/* Bottom Card */}
             <View style={styles.bottomCard}>
-                <View style={styles.loadingContainer}>
-                    <View style={styles.loadingDots}>
-                        <View style={[styles.dot, styles.dotAnimated]} />
-                        <View style={[styles.dot, styles.dotAnimated]} />
-                        <View style={[styles.dot, styles.dotAnimated]} />
+                {/* OTP Display - Show when driver is found */}
+                {ridePhase !== 'searching' && startOtp && (
+                    <View style={styles.otpContainer}>
+                        <Text style={styles.otpLabel}>Share this OTP with driver</Text>
+                        <Text style={styles.otpCode}>{startOtp}</Text>
                     </View>
-                </View>
+                )}
+
                 <View style={styles.rideInfo}>
                     <View style={styles.vehicleRow}>
                         <View style={styles.vehicleIconCircle}>
-                            <Icon name="motorcycle" size={24} color="#2D7C4F" />
+                            <Icon
+                                name={VEHICLE_ICONS[selectedVehicle] || 'motorcycle'}
+                                size={24}
+                                color="#2D7C4F"
+                            />
                         </View>
                         <View style={styles.vehicleDetails}>
-                            <Text style={styles.vehicleName}>Bike</Text>
-                            <Text style={styles.vehiclePrice}>₹25</Text>
+                            <Text style={styles.vehicleName}>
+                                {VEHICLE_NAMES[selectedVehicle] || 'Bike'}
+                            </Text>
+                            <Text style={styles.vehiclePrice}>₹{fare}</Text>
+                        </View>
+                        <View style={styles.rideTypeBadge}>
+                            <Text style={styles.rideTypeText}>
+                                {rideType === 'solo' ? 'Solo' : rideType === 'shared' ? 'Shared' : 'Schedule'}
+                            </Text>
                         </View>
                     </View>
+
                     <View style={styles.divider} />
+
                     <View style={styles.tripDetails}>
                         <View style={styles.locationRow}>
                             <View style={styles.greenDot} />
-                            <Text style={styles.locationText}>Current Location</Text>
+                            <Text style={styles.locationText} numberOfLines={1}>
+                                {pickup.address}
+                            </Text>
                         </View>
                         <View style={styles.locationRow}>
                             <View style={styles.redDot} />
-                            <Text style={styles.locationText}>Central Mall</Text>
+                            <Text style={styles.locationText} numberOfLines={1}>
+                                {dropoff.address}
+                            </Text>
                         </View>
                     </View>
                 </View>
-                <Text style={styles.waitTime}>Estimated wait: 2-3 minutes</Text>
-                <TouchableOpacity
-                    style={styles.confirmButton}
-                    onPress={() => navigation.navigate('DriverFoundTabs')}
-                >
-                    <Text style={styles.confirmButtonText}>Confirm Ride</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-                    <Text style={styles.cancelButtonText}>Cancel Request</Text>
-                </TouchableOpacity>
+
+                {/* Driver Info Card - Enhanced */}
+                {currentDriver ? (
+                    <View style={styles.driverCard}>
+                        <View style={styles.driverRow}>
+                            <View style={styles.driverAvatar}>
+                                <Text style={styles.driverAvatarText}>
+                                    {currentDriver.name?.charAt(0) || 'D'}
+                                </Text>
+                            </View>
+                            <View style={styles.driverDetails}>
+                                <Text style={styles.driverName}>{currentDriver.name}</Text>
+                                <Text style={styles.driverVehicle}>
+                                    {currentDriver.vehicleNumber} • ⭐ {currentDriver.rating?.toFixed(1) || '4.5'}
+                                </Text>
+                            </View>
+                            <View style={styles.driverActions}>
+                                <TouchableOpacity style={styles.actionBtn}>
+                                    <Ionicons name="call" size={18} color="#219653" />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.actionBtn}>
+                                    <Ionicons name="chatbubble" size={18} color="#219653" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                ) : (
+                    <Text style={styles.waitTime}>Estimated wait: 2-3 minutes</Text>
+                )}
+
+                {/* Action Button based on phase */}
+                {ridePhase === 'arrived' ? (
+                    <TouchableOpacity 
+                        style={[styles.cancelButton, { backgroundColor: '#219653', borderColor: '#219653' }]} 
+                        onPress={() => navigation.navigate('RatingTabs', { rideId })}
+                    >
+                        <Text style={[styles.cancelButtonText, { color: '#fff' }]}>Rate Your Ride</Text>
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+                        <Text style={styles.cancelButtonText}>Cancel Request</Text>
+                    </TouchableOpacity>
+                )}
             </View>
-        </SafeAreaView>
+        </GestureHandlerRootView>
     );
 };
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F5F5F5',
+    },
+    mapContainer: {
+        flex: 1,
+    },
+    map: {
+        flex: 1,
     },
     backButton: {
         position: 'absolute',
@@ -180,54 +633,113 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 4,
     },
-    mapPlaceholder: {
-        flex: 1,
-        backgroundColor: '#E8F5E9',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    pulseContainer: {
-        width: 150,
-        height: 150,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 30,
-    },
-    pulse: {
+    searchingOverlay: {
         position: 'absolute',
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: '#2D7C4F',
+        top: 100,
+        left: 20,
+        right: 20,
+        alignItems: 'center',
     },
-    centerPin: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
+    searchingBadge: {
         backgroundColor: '#FFFFFF',
-        justifyContent: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 25,
+        flexDirection: 'row',
         alignItems: 'center',
         elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.15,
         shadowRadius: 4,
     },
-    searchingText: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#2D7C4F',
-        marginBottom: 8,
+    timerBadge: {
+        backgroundColor: '#FFFFFF',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 10,
+        elevation: 3,
     },
-    searchingSubtext: {
-        fontSize: 15,
-        color: '#666',
+    timerText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#333',
+        marginLeft: 6,
+    },
+    loadingDots: {
+        flexDirection: 'row',
+        marginRight: 10,
+    },
+    dot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: '#CCC',
+        marginHorizontal: 2,
+    },
+    dotActive: {
+        backgroundColor: '#2D7C4F',
+    },
+    searchingText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#333',
+    },
+    pickupMarkerOuter: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    pickupMarker: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: 'rgba(33, 150, 83, 0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    pickupMarkerDot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: '#219653',
+    },
+    destinationMarker: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#EB5757',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 3,
+    },
+    driverMarker: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#666',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 3,
+    },
+    selectedDriverMarker: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#2D7C4F',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+        borderWidth: 3,
+        borderColor: '#fff',
     },
     bottomCard: {
         backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
-        paddingVertical: 25,
+        paddingVertical: 20,
         paddingHorizontal: 20,
         elevation: 10,
         shadowColor: '#000',
@@ -235,28 +747,33 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.15,
         shadowRadius: 6,
     },
-    loadingContainer: {
+    otpContainer: {
+        backgroundColor: '#F0FFF4',
+        borderRadius: 12,
+        padding: 12,
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 15,
+        borderWidth: 1,
+        borderColor: '#219653',
     },
-    loadingDots: {
-        flexDirection: 'row',
+    otpLabel: {
+        fontSize: 12,
+        color: '#666',
+        marginBottom: 4,
     },
-    dot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#2D7C4F',
-        marginHorizontal: 4,
+    otpCode: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#219653',
+        letterSpacing: 4,
     },
-    dotAnimated: {},
     rideInfo: {
-        marginBottom: 20,
+        marginBottom: 15,
     },
     vehicleRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 15,
+        marginBottom: 12,
     },
     vehicleIconCircle: {
         width: 50,
@@ -274,20 +791,31 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         color: '#333',
-        marginBottom: 4,
+        marginBottom: 2,
     },
     vehiclePrice: {
         fontSize: 16,
         fontWeight: '600',
         color: '#2D7C4F',
     },
+    rideTypeBadge: {
+        backgroundColor: '#219653',
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    rideTypeText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '600',
+    },
     divider: {
         height: 1,
         backgroundColor: '#F0F0F0',
-        marginVertical: 15,
+        marginVertical: 12,
     },
     tripDetails: {
-        gap: 12,
+        gap: 10,
     },
     locationRow: {
         flexDirection: 'row',
@@ -310,6 +838,60 @@ const styles = StyleSheet.create({
     locationText: {
         fontSize: 14,
         color: '#666',
+        flex: 1,
+    },
+    driverCard: {
+        backgroundColor: '#F8F9FA',
+        padding: 14,
+        borderRadius: 12,
+        marginBottom: 15,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    driverRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    driverAvatar: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#F2C94C',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    driverAvatarText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#219653',
+    },
+    driverDetails: {
+        flex: 1,
+    },
+    driverName: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#333',
+        marginBottom: 2,
+    },
+    driverVehicle: {
+        fontSize: 13,
+        color: '#666',
+    },
+    driverActions: {
+        flexDirection: 'row',
+        gap: 10,
+    },
+    actionBtn: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#FFFFFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#219653',
     },
     waitTime: {
         fontSize: 14,
@@ -317,18 +899,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontWeight: '600',
         marginBottom: 15,
-    },
-    confirmButton: {
-        backgroundColor: '#2D7C4F',
-        borderRadius: 12,
-        paddingVertical: 14,
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    confirmButtonText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#FFFFFF',
     },
     cancelButton: {
         borderWidth: 2,
@@ -343,4 +913,5 @@ const styles = StyleSheet.create({
         color: '#EB5757',
     },
 });
+
 export default FindingDriverScreen;

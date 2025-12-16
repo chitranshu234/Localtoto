@@ -20,7 +20,6 @@ import RideStatusScreen from '../screens/RideStatusScreen';
 import RatingScreen from '../screens/RatingScreen';
 import ConfirmScreen from '../screens/ConfirmScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
-import SearchScreen from '../screens/SearchScreen';
 import FindingDriverScreen from '../screens/FindingDriverScreen';
 import DriverFoundScreen from '../screens/DriverFoundScreen';
 
@@ -52,18 +51,18 @@ const AuthNavigator = () => {
 
 // Reusable Bottom Tab Navigator Component
 const createTabNavigator = (HomeComponent: React.ComponentType<any>) => {
-    return () => (
+    return ({ route }: any) => (
         <Tab.Navigator
-            screenOptions={({ route }) => ({
+            screenOptions={({ route: tabRoute }) => ({
                 headerShown: false,
                 tabBarIcon: ({ focused, color, size }) => {
                     let iconName: string;
 
-                    if (route.name === 'Home') {
+                    if (tabRoute.name === 'Home') {
                         iconName = focused ? 'home' : 'home-outline';
-                    } else if (route.name === 'Activity') {
+                    } else if (tabRoute.name === 'Activity') {
                         iconName = focused ? 'list' : 'list-outline';
-                    } else if (route.name === 'Account') {
+                    } else if (tabRoute.name === 'Account') {
                         iconName = focused ? 'person' : 'person-outline';
                     } else {
                         iconName = 'help-circle-outline';
@@ -90,6 +89,7 @@ const createTabNavigator = (HomeComponent: React.ComponentType<any>) => {
             <Tab.Screen
                 name="Home"
                 component={HomeComponent}
+                initialParams={route.params}
                 options={{
                     tabBarLabel: 'Home',
                 }}
@@ -113,7 +113,6 @@ const createTabNavigator = (HomeComponent: React.ComponentType<any>) => {
 };
 
 // Tab Navigators for each screen
-const SearchTabNavigator = createTabNavigator(SearchScreen);
 const ConfirmTabNavigator = createTabNavigator(ConfirmScreen);
 const FindingDriverTabNavigator = createTabNavigator(FindingDriverScreen);
 const DriverFoundTabNavigator = createTabNavigator(DriverFoundScreen);
@@ -128,13 +127,7 @@ const MainNavigator = () => {
             }}
         >
             {/* Main Screens with Bottom Tabs */}
-            <AppStack.Screen
-                name="SearchTabs"
-                component={SearchTabNavigator}
-                options={{
-                    gestureEnabled: false,
-                }}
-            />
+            {/* ConfirmTabs is now the Home Screen (was SearchTabs) */}
             <AppStack.Screen
                 name="ConfirmTabs"
                 component={ConfirmTabNavigator}

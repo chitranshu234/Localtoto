@@ -2,18 +2,24 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import authReducer from './slices/authSlice';
+import bookingReducer from './slices/bookingSlice';
+import rideReducer from './slices/rideSlice';
+import historyReducer from './slices/historySlice';
 
 // Persist configuration
 const persistConfig = {
     key: 'root',
     version: 1,
     storage: AsyncStorage,
-    whitelist: ['auth'], // Only persist auth state
+    whitelist: ['auth'], // Only persist auth state (tokens should persist across app restarts)
 };
 
-// Root reducer
+// Root reducer with all slices
 const rootReducer = combineReducers({
     auth: authReducer,
+    booking: bookingReducer,
+    ride: rideReducer,
+    history: historyReducer,
 });
 
 // Persisted reducer

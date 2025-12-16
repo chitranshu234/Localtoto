@@ -113,8 +113,9 @@ const OTPScreen = ({ navigation, route }: any) => {
             // Fetch user profile after successful login
             await dispatch(fetchUserProfile()).unwrap();
 
-            // Navigate to main app
-            navigation.replace('Map');
+            // Navigate to main app - happens automatically via conditional rendering
+            // when isAuthenticated becomes true in Redux state
+            console.log('✅ Login successful - auto-navigating to main app');
         } catch (error: any) {
             console.error('Verification failed:', error);
             console.error('Backend error response:', JSON.stringify(error?.response?.data));

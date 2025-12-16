@@ -13,7 +13,8 @@ export const authService = {
 
     getProfile: async (): Promise<User> => {
         const response = await client.get('/users/profile');
-        return response.data;
+        // Backend returns { success: true, user: {...} }, extract just the user
+        return response.data.user || response.data;
     },
 
     // Note: Backend only supports photo upload, not name/email update
@@ -24,7 +25,7 @@ export const authService = {
         return response.data;
     },
 
-    // Keep for compatibility but note it won't work for name/email
+    // Update profile with firstName, lastName, email
     updateProfile: async (data: Partial<User> | FormData): Promise<User> => {
         // If it's FormData with a photo, use the photo upload endpoint
         if (data instanceof FormData) {
@@ -33,9 +34,15 @@ export const authService = {
             });
             return response.data;
         }
-        // For name/email updates, there's no backend endpoint - just return current profile
-        console.warn('⚠️ Backend does not support name/email updates. Only photo upload is available.');
-        const response = await client.get('/users/profile');
+
+        // For name/email updates, use PUT /users/profile
+        console.log('📝 Updating profile:', JSON.stringify(data));
+        const response = await client.put('/users/profile', {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+        });
+        console.log('✅ Profile updated:', JSON.stringify(response.data));
         return response.data;
     },
 };

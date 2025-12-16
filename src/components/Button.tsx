@@ -47,31 +47,9 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     primaryContainer: {
-        backgroundColor: 'transparent', // Assuming the button might be on a green background or white, let's check designs.
-        // Actually, looking at the design:
-        // Location Screen: "Use current location" is Green with White text (or White with Green text if bg is green).
-        // Wait, the Location screen background is Green.
-        // "Use current location" button has a White border and Transparent background? Or maybe White background with Green text?
-        // Let's look at the image `uploaded_image_1`.
-        // "Use current location" -> Transparent background with White Border and White Text? Or maybe it's a gradient?
-        // It looks like a button with a white border and white text.
-        // "Select it manually" -> Yellow/Orange text, no background.
-
-        // Onboarding Screen (uploaded_image_2):
-        // "Confirm your driver" -> No button shown? Ah, there is a phone mock.
-        // Wait, where is the "Next" button?
-        // The design shows a pagination indicator at the bottom. Maybe it's swipe only?
-        // Or maybe the "Next" button is hidden or not in the view?
-        // The user said "make it as it is".
-
-        // Let's re-examine `uploaded_image_1` (Location Screen).
-        // Background: Green.
-        // Button: "Use current location" -> Border: White, Text: White, Icon: Navigation Arrow.
-        // Button: "Select it manually" -> Text: Yellow/Orange.
-
-        // Let's implement based on that.
-        borderWidth: 1,
-        borderColor: '#FFFFFF',
+        backgroundColor: '#219653', // Green background
+        borderWidth: 0,
+        borderRadius: 12,
     },
     secondaryContainer: {
         backgroundColor: 'transparent',

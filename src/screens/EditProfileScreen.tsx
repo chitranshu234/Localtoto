@@ -24,7 +24,17 @@ import { authService } from '../services/api/auth';
 const EditProfileScreen = ({ navigation }: any) => {
     const dispatch = useAppDispatch();
     const { user } = useAppSelector((state) => state.auth);
-    const [name, setName] = useState(user?.name || '');
+
+    // Helper to get full name from user object
+    const getFullName = () => {
+        if (user?.name) return user.name;
+        if (user?.firstName || user?.lastName) {
+            return `${user.firstName || ''} ${user.lastName || ''}`.trim();
+        }
+        return '';
+    };
+
+    const [name, setName] = useState(getFullName());
     const [phone, setPhone] = useState(user?.phone || user?.phoneNumber || '');
     const [email, setEmail] = useState(user?.email || '');
     const [profileImage, setProfileImage] = useState(user?.profileImage || user?.profilePhotoUrl || null);
@@ -33,8 +43,13 @@ const EditProfileScreen = ({ navigation }: any) => {
 
     // Sync local state when user data loads/changes from Redux
     useEffect(() => {
+        console.log('📋 EditProfile - User data from Redux:', JSON.stringify(user));
         if (user) {
-            setName(user.name || '');
+            const fullName = user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim();
+            console.log('📋 Computed fullName:', fullName);
+            console.log('📋 Phone:', user.phone || user.phoneNumber);
+            console.log('📋 Email:', user.email);
+            setName(fullName);
             setPhone(user.phone || user.phoneNumber || '');
             setEmail(user.email || '');
             if (!newImage) {
@@ -141,30 +156,46 @@ const EditProfileScreen = ({ navigation }: any) => {
     };
 
     const handleSave = async () => {
-        // Backend only supports photo upload, not name/email changes
-        if (!newImage) {
-            Alert.alert(
-                'Photo Only',
-                'Only profile photo changes can be saved. Name and email editing is not available yet.',
-                [{ text: 'OK' }]
-            );
-            return;
-        }
-
         setIsLoading(true);
         try {
-            console.log('Uploading profile photo...');
+            // 1. First, update name/email if changed
+            const originalName = user?.name || `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
+            const originalEmail = user?.email || '';
 
-            const formData = new FormData();
-            formData.append('photo', {
-                uri: newImage.uri,
-                type: newImage.type || 'image/jpeg',
-                name: newImage.fileName || 'profile.jpg',
-            } as any);
+            if (name !== originalName || email !== originalEmail) {
+                console.log('📝 Updating profile info...');
 
-            await authService.updateProfile(formData);
+                // Split full name into firstName and lastName
+                const nameParts = name.trim().split(' ');
+                const firstName = nameParts[0] || '';
+                const lastName = nameParts.slice(1).join(' ') || '';
+
+                await authService.updateProfile({
+                    firstName,
+                    lastName,
+                    email: email || undefined,
+                });
+                console.log('✅ Profile info updated');
+            }
+
+            // 2. Then, upload photo if changed
+            if (newImage) {
+                console.log('📸 Uploading profile photo...');
+                const formData = new FormData();
+                formData.append('photo', {
+                    uri: newImage.uri,
+                    type: newImage.type || 'image/jpeg',
+                    name: newImage.fileName || 'profile.jpg',
+                } as any);
+
+                await authService.uploadProfilePhoto(formData);
+                console.log('✅ Profile photo uploaded');
+            }
+
+            // 3. Refresh user profile from server
             await dispatch(fetchUserProfile()).unwrap();
-            Alert.alert('Success', 'Profile photo updated successfully');
+
+            Alert.alert('Success', 'Profile updated successfully');
             navigation.goBack();
         } catch (error: any) {
             console.error('Failed to update profile:', error);

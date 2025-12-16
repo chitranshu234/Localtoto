@@ -17,6 +17,24 @@ const ProfileScreen = ({ navigation }: any) => {
     const dispatch = useAppDispatch();
     const { user } = useAppSelector((state) => state.auth);
 
+    // Get full name from user object (combining firstName + lastName)
+    const getFullName = () => {
+        if (user?.name) return user.name;
+        if (user?.firstName || user?.lastName) {
+            return `${user.firstName || ''} ${user.lastName || ''}`.trim();
+        }
+        return 'User';
+    };
+
+    const getInitial = () => {
+        const name = getFullName();
+        return name.charAt(0).toUpperCase();
+    };
+
+    const getProfileImage = () => {
+        return user?.profileImage || user?.profilePhotoUrl || null;
+    };
+
     const menuItems = [
         {
             id: '1',
@@ -76,15 +94,13 @@ const ProfileScreen = ({ navigation }: any) => {
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 <View style={styles.profileCard}>
                     <View style={styles.avatarCircle}>
-                        {user?.profileImage ? (
-                            <Image source={{ uri: user.profileImage }} style={styles.avatarImage} />
+                        {getProfileImage() ? (
+                            <Image source={{ uri: getProfileImage()! }} style={styles.avatarImage} />
                         ) : (
-                            <Text style={styles.avatarText}>
-                                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                            </Text>
+                            <Text style={styles.avatarText}>{getInitial()}</Text>
                         )}
                     </View>
-                    <Text style={styles.userName}>{user?.name || 'User'}</Text>
+                    <Text style={styles.userName}>{getFullName()}</Text>
                     <Text style={styles.userPhone}>{user?.phone || user?.phoneNumber || ''}</Text>
                     <TouchableOpacity
                         style={styles.editButton}
