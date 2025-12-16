@@ -4,6 +4,7 @@ import {
     Text,
     Image,
     TouchableOpacity,
+    Pressable,
     StyleSheet,
     Dimensions,
     StatusBar,
@@ -25,6 +26,7 @@ import Mapbox, { Camera, PointAnnotation, ShapeSource, LineLayer } from '@rnmapb
 import Geolocation from 'react-native-geolocation-service';
 import { BottomSheetModal, BottomSheetModalProvider, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import ReanimatedModule, { useSharedValue, useAnimatedStyle, withSpring, interpolate, Extrapolate } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Redux
 import { useAppDispatch, useAppSelector } from '../store/hooks';
@@ -39,36 +41,31 @@ Mapbox.setAccessToken(MAPBOX_ACCESS_TOKEN);
 const RECENT_ADDRESSES_KEY = '@localtoto_recent_addresses';
 
 
-const VEHICLES = [
+// Ride Types: Solo, Shared, Schedule
+const RIDE_TYPES = [
     {
-        id: '1',
-        name: 'Bike',
-        description: 'Quick & affordable',
-        price: '₹25',
-        eta: '2 min',
-        capacity: '1 seat',
-        image: require('../assets/bike-removebg-preview.png'),
-        hasShared: false,
+        id: 'solo',
+        name: 'Solo',
+        description: 'Private ride just for you',
+        icon: 'person',
+        iconOutline: 'person-outline',
+        color: '#2D7C4F',
     },
     {
-        id: '2',
-        name: 'E-Rickshaw',
-        description: 'Eco-friendly rides',
-        price: '₹45',
-        eta: '4 min',
-        capacity: '2 seats',
-        image: require('../assets/e_rickshaw-removebg-preview.png'),
-        hasShared: true,
+        id: 'shared',
+        name: 'Shared',
+        description: 'Share & save more',
+        icon: 'people',
+        iconOutline: 'people-outline',
+        color: '#3498db',
     },
     {
-        id: '3',
-        name: 'Toto',
-        description: 'Comfy, spacious auto',
-        price: '₹65',
-        eta: '6 min',
-        capacity: '4 seats',
-        image: require('../assets/auto_rickshaw-removebg-preview.png'),
-        hasShared: true,
+        id: 'schedule',
+        name: 'Schedule',
+        description: 'Book for later',
+        icon: 'time',
+        iconOutline: 'time-outline',
+        color: '#9b59b6',
     },
 ];
 
@@ -110,13 +107,30 @@ const ConfirmScreen = ({ navigation, route }: any) => {
     const [loadingLocation, setLoadingLocation] = useState(true);
     const [hasLocationPermission, setHasLocationPermission] = useState(false);
 
-    // --- State: Vehicle Selection ---
-    const [selectedVehicle, setSelectedVehicle] = useState(VEHICLES[0].id);
+    // --- State: Ride Type Selection ---
+    const [selectedRideType, setSelectedRideType] = useState<'solo' | 'shared' | 'schedule'>('solo');
     const [paymentMethod, setPaymentMethod] = useState('cash');
     const [promoCode, setPromoCode] = useState('');
-    const [showRideTypeModal, setShowRideTypeModal] = useState(false);
-    const [showBikeModal, setShowBikeModal] = useState(false);
-    const [selectedRideType, setSelectedRideType] = useState<'solo' | 'shared' | 'schedule'>('solo');
+
+    // --- State: Nearby Drivers ---
+    const [nearbyDrivers, setNearbyDrivers] = useState<any[]>([]);
+
+    // --- State: Bottom Sheet Position ---
+    const [sheetPosition, setSheetPosition] = useState(height * 0.55); // Start at 45% visible (55% from top)
+    const [sheetIndex, setSheetIndex] = useState(0); // 0 = partially open, 1 = fully expanded
+
+    // --- Button Animation ---
+    const buttonScaleAnim = useRef(new Animated.Value(1)).current;
+
+    // --- Ripple Animation - Only 2 ripples for subtle effect ---
+    const rippleAnims = useRef([
+        new Animated.Value(0),
+        new Animated.Value(0),
+    ]).current;
+    const [showRipples, setShowRipples] = useState(false);
+
+    // --- Locate Button Fade Animation ---
+    const locateButtonOpacity = useRef(new Animated.Value(1)).current;
 
     // --- State: Route & Map ---
     const [routeCoordinates, setRouteCoordinates] = useState<any[]>([]);
@@ -159,6 +173,7 @@ const ConfirmScreen = ({ navigation, route }: any) => {
         requestLocationPermission();
         loadRecentAddresses();
         startPulseAnimation();
+        generateNearbyDrivers();
     }, []);
 
     // 2. Get Location when permission granted
@@ -193,10 +208,10 @@ const ConfirmScreen = ({ navigation, route }: any) => {
         if (routeCoordinates.length > 0) {
             setTimeout(adjustCameraToFitPoints, 500);
         } else if (pickupLocation && !dropLocation) {
-            // Focus on pickup if only pickup is set
+            // Focus on pickup if only pickup is set - higher zoom for better visibility
             cameraRef.current?.setCamera({
                 centerCoordinate: [pickupLocation.longitude, pickupLocation.latitude],
-                zoomLevel: 14,
+                zoomLevel: 16,
                 animationDuration: 1000,
             });
         }
@@ -275,6 +290,77 @@ const ConfirmScreen = ({ navigation, route }: any) => {
         }
     };
 
+    // Generate nearby drivers around pickup location
+    const generateNearbyDrivers = () => {
+        // Mock drivers near current location
+        const mockDrivers = [
+            { id: '1', name: 'Rajesh', lat: 0.002, lng: 0.003, eta: '2 min' },
+            { id: '2', name: 'Amit', lat: -0.001, lng: 0.002, eta: '3 min' },
+            { id: '3', name: 'Suresh', lat: 0.001, lng: -0.002, eta: '4 min' },
+            { id: '4', name: 'Vikram', lat: -0.002, lng: -0.001, eta: '5 min' },
+        ];
+        setNearbyDrivers(mockDrivers);
+    };
+
+    // Button press animation
+    const animateButtonPress = () => {
+        Animated.sequence([
+            Animated.timing(buttonScaleAnim, {
+                toValue: 0.85,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+            Animated.spring(buttonScaleAnim, {
+                toValue: 1,
+                useNativeDriver: true,
+                friction: 3,
+                tension: 100,
+            }),
+        ]).start();
+    };
+
+    // Water ripple animation for confirm button - soft and professional
+    const triggerRippleAnimation = () => {
+        setShowRipples(true);
+        // Reset all ripples
+        rippleAnims.forEach(anim => anim.setValue(0));
+
+        // Staggered ripple animations - slower and smoother
+        const animations = rippleAnims.map((anim, index) =>
+            Animated.timing(anim, {
+                toValue: 1,
+                duration: 900, // Slower for smoother effect
+                delay: index * 200, // Gentler stagger
+                easing: Easing.out(Easing.cubic), // Smoother easing
+                useNativeDriver: true,
+            })
+        );
+
+        Animated.parallel(animations).start(() => {
+            setShowRipples(false);
+            rippleAnims.forEach(anim => anim.setValue(0));
+        });
+    };
+
+    // Handle bottom sheet position change
+    const handleSheetChange = useCallback((index: number) => {
+        // Track sheet index for button visibility
+        setSheetIndex(index);
+        // Calculate position based on snap point
+        const currentSnapPoints = bookingStage === 'search' ? ['45%', '85%'] : ['40%', '70%'];
+        const snapPercent = parseFloat(currentSnapPoints[index]) / 100;
+        const newPosition = height * (1 - snapPercent);
+        setSheetPosition(newPosition);
+
+        // Smooth fade animation for locate button
+        Animated.timing(locateButtonOpacity, {
+            toValue: index === 0 ? 1 : 0, // Fade in when partially open, fade out when fully expanded
+            duration: 200,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: true,
+        }).start();
+    }, [bookingStage, locateButtonOpacity]);
+
     const getCurrentLocation = () => {
         setLoadingLocation(true);
         Geolocation.getCurrentPosition(
@@ -293,6 +379,12 @@ const ConfirmScreen = ({ navigation, route }: any) => {
                 setPickupLocation(location);
                 setPickupQuery(location.address);
                 setLoadingLocation(false);
+                cameraRef.current?.setCamera({
+                    centerCoordinate: [longitude, latitude],
+                    zoomLevel: 17,
+                    animationDuration: 1000,
+                });
+
             },
             (error) => {
                 console.log('Error getting location:', error);
@@ -460,18 +552,15 @@ const ConfirmScreen = ({ navigation, route }: any) => {
         Keyboard.dismiss();
     };
 
-    const handleVehicleSelect = (vehicleId: string) => {
-        setSelectedVehicle(vehicleId);
-        // Bike (id: '1') only supports Solo and Schedule
-        if (vehicleId === '1') {
-            setShowBikeModal(true);
-        } else {
-            setShowRideTypeModal(true);
-        }
+    const handleRideTypeSelect = (rideType: 'solo' | 'shared' | 'schedule') => {
+        setSelectedRideType(rideType);
     };
 
     const handleConfirmRide = async () => {
         if (!pickupLocation || !dropLocation) return;
+
+        // Animate button on press
+        animateButtonPress();
 
         const rideType = selectedRideType === 'shared' ? 'shared' : 'private';
         const fare = estimatedFare || rideFare?.total || 25;
@@ -493,7 +582,7 @@ const ConfirmScreen = ({ navigation, route }: any) => {
             navigation.navigate('FindingDriverTabs', {
                 pickup: pickupLocation,
                 dropoff: dropLocation,
-                vehicle: selectedVehicle,
+                vehicle: selectedRideType,
                 rideType: selectedRideType,
                 paymentMethod: paymentMethod,
                 fare: fare,
@@ -515,7 +604,7 @@ const ConfirmScreen = ({ navigation, route }: any) => {
         if (pickupLocation) {
             cameraRef.current?.setCamera({
                 centerCoordinate: [pickupLocation.longitude, pickupLocation.latitude],
-                zoomLevel: 14,
+                zoomLevel: 16,
                 animationDuration: 1000,
             });
         }
@@ -659,48 +748,41 @@ const ConfirmScreen = ({ navigation, route }: any) => {
             </View>
             <Text style={styles.sectionSubtitle}>Best prices in your city ✨</Text>
 
-            <View style={styles.vehicleList}>
-                {VEHICLES.map((vehicle) => (
+            <View style={styles.rideTypeList}>
+                {RIDE_TYPES.map((rideType) => (
                     <TouchableOpacity
-                        key={vehicle.id}
+                        key={rideType.id}
                         style={[
-                            styles.vehicleCard,
-                            selectedVehicle === vehicle.id && styles.selectedCard,
+                            styles.rideTypeCard,
+                            selectedRideType === rideType.id && styles.selectedRideTypeCard,
                         ]}
-                        onPress={() => handleVehicleSelect(vehicle.id)}
+                        onPress={() => handleRideTypeSelect(rideType.id as any)}
+                        activeOpacity={0.8}
                     >
                         <View style={[
-                            styles.vehicleImageContainer,
-                            vehicle.name === 'Toto' && styles.vehicleImageContainerLarge
+                            styles.rideTypeIconContainer,
+                            { backgroundColor: selectedRideType === rideType.id ? rideType.color : '#f5f5f5' }
                         ]}>
-                            <Image
-                                source={vehicle.image}
-                                style={[
-                                    styles.vehicleImage,
-                                    vehicle.name === 'E-Rickshaw' && styles.vehicleImageSmaller
-                                ]}
-                                resizeMode="contain"
+                            <Ionicons
+                                name={selectedRideType === rideType.id ? rideType.icon : rideType.iconOutline}
+                                size={28}
+                                color={selectedRideType === rideType.id ? '#fff' : rideType.color}
                             />
                         </View>
-                        <View style={styles.vehicleinfo}>
+                        <View style={styles.rideTypeInfo}>
                             <Text style={[
-                                styles.vehicleName,
-                                selectedVehicle === vehicle.id && styles.selectedText
-                            ]}>{vehicle.name}</Text>
-                            <Text style={styles.vehicleDescription}>{vehicle.description}</Text>
-                            <Text style={styles.vehicleEta}>{vehicle.eta} • {vehicle.capacity}</Text>
+                                styles.rideTypeName,
+                                selectedRideType === rideType.id && { color: rideType.color }
+                            ]}>{rideType.name}</Text>
+                            <Text style={styles.rideTypeDescription}>{rideType.description}</Text>
                         </View>
-                        <View style={styles.priceContainer}>
+                        <View style={styles.rideTypePriceContainer}>
                             <Text style={[
-                                styles.vehiclePrice,
-                                selectedVehicle === vehicle.id && styles.selectedPriceText
+                                styles.rideTypePrice,
+                                selectedRideType === rideType.id && { color: rideType.color }
                             ]}>₹{estimatedFare || rideFare?.total || 0}</Text>
-                            {selectedVehicle === vehicle.id && (
-                                <View style={styles.rideTypeBadge}>
-                                    <Text style={styles.rideTypeBadgeText}>
-                                        {selectedRideType === 'solo' ? 'Solo' : selectedRideType === 'shared' ? 'Shared' : 'Schedule'}
-                                    </Text>
-                                </View>
+                            {selectedRideType === rideType.id && (
+                                <Ionicons name="checkmark-circle" size={20} color={rideType.color} />
                             )}
                         </View>
                     </TouchableOpacity>
@@ -751,16 +833,62 @@ const ConfirmScreen = ({ navigation, route }: any) => {
         </View>
     );
 
-    const renderFooter = () => (
-        <View style={styles.footer}>
-            <Button
-                title={`Confirm Ride • ₹${estimatedFare || rideFare?.total || 0}`}
-                onPress={handleConfirmRide}
-                variant="primary"
-                style={styles.confirmButton}
-            />
-        </View>
-    );
+    const renderFooter = () => {
+        // Ripple styles - visible but elegant
+        const buttonHeight = 56;
+        const getRippleStyle = (animValue: Animated.Value, index: number) => ({
+            position: 'absolute' as const,
+            top: buttonHeight / 2 - 25, // Center vertically
+            left: (width - 40) / 2 - 25, // Center horizontally (width minus padding)
+            width: 50,
+            height: 50,
+            borderRadius: 25,
+            backgroundColor: 'rgba(255, 255, 255, 0.3)', // More visible
+            transform: [
+                {
+                    scale: animValue.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.5, 6 + index], // Gentle expansion
+                    })
+                }
+            ],
+            opacity: animValue.interpolate({
+                inputRange: [0, 0.4, 1],
+                outputRange: [0.45, 0.25, 0], // More visible opacity
+            }),
+        });
+
+        const handleButtonPress = () => {
+            triggerRippleAnimation();
+            // Only ripple, no scale animation
+            handleConfirmRide();
+        };
+
+        return (
+            <View style={styles.footer}>
+                <View style={{ width: '100%', overflow: 'hidden', borderRadius: 14 }}>
+                    <Pressable
+                        style={[styles.animatedConfirmButton]}
+                        onPress={handleButtonPress}
+                    >
+                        {/* Water Ripple Effects */}
+                        {showRipples && rippleAnims.map((anim, index) => (
+                            <Animated.View
+                                key={`ripple-${index}`}
+                                style={getRippleStyle(anim, index)}
+                                pointerEvents="none"
+                            />
+                        ))}
+
+                        <Text style={styles.confirmButtonText}>
+                            Confirm Ride • ₹{estimatedFare || rideFare?.total || 0}
+                        </Text>
+                        <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
+                    </Pressable>
+                </View>
+            </View>
+        );
+    };
 
     return (
         <GestureHandlerRootView style={styles.container}>
@@ -796,7 +924,7 @@ const ConfirmScreen = ({ navigation, route }: any) => {
                     >
                         <Camera
                             ref={cameraRef}
-                            zoomLevel={14}
+                            zoomLevel={18}
                             centerCoordinate={[79.4833, 29.0333]} // Default
                             animationMode="flyTo"
                             animationDuration={1000}
@@ -851,8 +979,55 @@ const ConfirmScreen = ({ navigation, route }: any) => {
                                 </View>
                             </PointAnnotation>
                         )}
+
+                        {/* Nearby Driver Markers - Show when pickup is set */}
+                        {pickupLocation && nearbyDrivers.map((driver) => (
+                            <PointAnnotation
+                                key={`driver-${driver.id}`}
+                                id={`driver-${driver.id}`}
+                                coordinate={[
+                                    pickupLocation.longitude + driver.lng,
+                                    pickupLocation.latitude + driver.lat
+                                ]}
+                            >
+                                <View style={styles.driverMarker}>
+                                    <Ionicons name="car-sport" size={14} color="#fff" />
+                                </View>
+                            </PointAnnotation>
+                        ))}
                     </Mapbox.MapView>
                 </View>
+
+                {/* Locate Button - Smooth fade transition */}
+                <Animated.View
+                    style={[
+                        styles.locateButtonFloating,
+                        {
+                            top: sheetPosition - 100,
+                            opacity: locateButtonOpacity,
+                        }
+                    ]}
+                    pointerEvents={sheetIndex === 0 ? 'auto' : 'none'}
+                >
+                    <Pressable
+                        style={({ pressed }) => ([
+                            styles.locateButtonInner,
+                            pressed && { opacity: 0.85, transform: [{ scale: 0.95 }] }
+                        ])}
+                        onPress={() => {
+                            if (pickupLocation) {
+                                cameraRef.current?.setCamera({
+                                    centerCoordinate: [pickupLocation.longitude, pickupLocation.latitude],
+                                    zoomLevel: 17,
+                                    animationDuration: 1000,
+                                });
+                            }
+                        }}
+                        android_ripple={{ color: 'rgba(45, 124, 79, 0.3)', borderless: false, radius: 25 }}
+                    >
+                        <Ionicons name="locate" size={24} color="#2D7C4F" />
+                    </Pressable>
+                </Animated.View>
 
                 {/* Bottom Sheet */}
                 <BottomSheetModal
@@ -862,6 +1037,7 @@ const ConfirmScreen = ({ navigation, route }: any) => {
                     enablePanDownToClose={false}
                     backgroundStyle={styles.bottomSheetBackground}
                     handleIndicatorStyle={styles.handleIndicator}
+                    onChange={handleSheetChange}
                 >
                     <View style={{ flex: 1 }}>
                         <BottomSheetScrollView contentContainerStyle={styles.bottomSheetContent}>
@@ -871,116 +1047,9 @@ const ConfirmScreen = ({ navigation, route }: any) => {
                     </View>
                 </BottomSheetModal>
 
-                {/* Modals (Ride Type / Bike) - Kept same as before */}
-                <Modal
-                    visible={showRideTypeModal}
-                    transparent
-                    animationType="slide"
-                    onRequestClose={() => setShowRideTypeModal(false)}
-                >
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.modalContent}>
-                            <View style={styles.modalHandle} />
-                            <Text style={styles.modalTitle}>Choose Ride Type</Text>
-                            <Text style={styles.modalSubtitle}>Select how you want to travel</Text>
-
-                            {['solo', 'shared', 'schedule'].map((type) => (
-                                <TouchableOpacity
-                                    key={type}
-                                    style={[
-                                        styles.rideTypeOption,
-                                        selectedRideType === type && styles.rideTypeOptionSelected,
-                                    ]}
-                                    onPress={() => {
-                                        setSelectedRideType(type as any);
-                                        setShowRideTypeModal(false);
-                                    }}
-                                >
-                                    <View style={styles.rideTypeLeft}>
-                                        <Ionicons
-                                            name={type === 'solo' ? 'person' : type === 'shared' ? 'people' : 'time-outline'}
-                                            size={24}
-                                            color={selectedRideType === type ? '#219653' : '#666'}
-                                        />
-                                        <View style={styles.rideTypeTextContainer}>
-                                            <Text style={[styles.rideTypeName, selectedRideType === type && styles.rideTypeNameSelected]}>
-                                                {type.charAt(0).toUpperCase() + type.slice(1)}
-                                            </Text>
-                                        </View>
-                                    </View>
-                                    <View style={[styles.radioOuter, selectedRideType === type && styles.radioOuterSelected]}>
-                                        {selectedRideType === type && <View style={styles.radioInner} />}
-                                    </View>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    </View>
-                </Modal>
-
-                <Modal
-                    visible={showBikeModal}
-                    transparent
-                    animationType="slide"
-                    onRequestClose={() => setShowBikeModal(false)}
-                >
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.modalContent}>
-                            <View style={styles.modalHandle} />
-                            <Text style={styles.modalTitle}>Choose Ride Type</Text>
-                            <Text style={styles.bikeNote}>
-                                <Ionicons name="information-circle-outline" size={14} color="#888" />
-                                {' '}Bike supports Solo and Schedule only
-                            </Text>
-
-                            {/* Solo Option */}
-                            <TouchableOpacity
-                                style={[
-                                    styles.rideTypeOption,
-                                    selectedRideType === 'solo' && styles.rideTypeOptionSelected,
-                                ]}
-                                onPress={() => {
-                                    setSelectedRideType('solo');
-                                    setShowBikeModal(false);
-                                }}
-                            >
-                                <View style={styles.rideTypeLeft}>
-                                    <Ionicons name="person" size={24} color={selectedRideType === 'solo' ? '#219653' : '#666'} />
-                                    <View style={styles.rideTypeTextContainer}>
-                                        <Text style={[styles.rideTypeName, selectedRideType === 'solo' && styles.rideTypeNameSelected]}>Solo</Text>
-                                    </View>
-                                </View>
-                                <View style={[styles.radioOuter, selectedRideType === 'solo' && styles.radioOuterSelected]}>
-                                    {selectedRideType === 'solo' && <View style={styles.radioInner} />}
-                                </View>
-                            </TouchableOpacity>
-
-                            {/* Schedule Option */}
-                            <TouchableOpacity
-                                style={[
-                                    styles.rideTypeOption,
-                                    selectedRideType === 'schedule' && styles.rideTypeOptionSelected,
-                                ]}
-                                onPress={() => {
-                                    setSelectedRideType('schedule');
-                                    setShowBikeModal(false);
-                                }}
-                            >
-                                <View style={styles.rideTypeLeft}>
-                                    <Ionicons name="time-outline" size={24} color={selectedRideType === 'schedule' ? '#219653' : '#666'} />
-                                    <View style={styles.rideTypeTextContainer}>
-                                        <Text style={[styles.rideTypeName, selectedRideType === 'schedule' && styles.rideTypeNameSelected]}>Schedule</Text>
-                                    </View>
-                                </View>
-                                <View style={[styles.radioOuter, selectedRideType === 'schedule' && styles.radioOuterSelected]}>
-                                    {selectedRideType === 'schedule' && <View style={styles.radioInner} />}
-                                </View>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </Modal>
 
             </BottomSheetModalProvider>
-        </GestureHandlerRootView>
+        </GestureHandlerRootView >
     );
 };
 
@@ -1139,6 +1208,97 @@ const styles = StyleSheet.create({
     map: {
         flex: 1,
     },
+    locateButton: {
+        position: 'absolute',
+        bottom: height * 0.45, // Position above the bottom sheet (45% snap point + some margin)
+        right: 15,
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.25,
+        shadowRadius: 5,
+        zIndex: 100,
+    },
+    locateButtonInSheet: {
+        position: 'absolute',
+        top: -60, // Position above the bottom sheet
+        right: 15,
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+        zIndex: 1000,
+    },
+    locateButtonFloating: {
+        position: 'absolute',
+        right: 15,
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+        zIndex: 1000,
+    },
+    locateButtonInner: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    locateMeBtn: {
+        position: 'absolute',
+        bottom: 450,
+        right: 15,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        zIndex: 10,
+    },
+    locateMeButtonFloating: {
+        position: 'absolute',
+        bottom: 380,
+        right: 15,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        zIndex: 999,
+    },
     bottomSheetBackground: {
         backgroundColor: '#fff',
         borderTopLeftRadius: 20,
@@ -1245,105 +1405,60 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#777',
     },
-    // Vehicle Selection Styles
+    // Header Styles
     vehicleHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 15,
     },
-    backButtonSmall: {
-        marginRight: 15,
-        padding: 5,
-    },
-    vehicleList: {
+    // Ride Type Selection Styles
+    rideTypeList: {
         marginBottom: 20,
     },
-    vehicleCard: {
+    rideTypeCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 15,
+        padding: 16,
         backgroundColor: '#fff',
-        borderRadius: 12,
+        borderRadius: 16,
         marginBottom: 12,
-        borderWidth: 1,
+        borderWidth: 1.5,
         borderColor: '#eee',
-        elevation: 2,
+        elevation: 3,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
     },
-    selectedCard: {
-        borderColor: '#219653',
+    selectedRideTypeCard: {
+        borderColor: '#2D7C4F',
         backgroundColor: '#F0FFF4',
         borderWidth: 2,
     },
-    vehicleImageContainer: {
-        width: 75,
-        height: 75,
+    rideTypeIconContainer: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 15,
-        backgroundColor: '#F8FFF8',
-        borderRadius: 10,
-        padding: 5,
+        marginRight: 16,
     },
-    vehicleImage: {
-        width: '100%',
-        height: '100%',
-    },
-    vehicleImageSmaller: {
-        width: '82%',
-        height: '82%',
-    },
-    vehicleImageContainerLarge: {
-        width: 85,
-        height: 85,
-    },
-    vehicleinfo: {
+    rideTypeInfo: {
         flex: 1,
     },
-    vehicleName: {
+    rideTypeDescription: {
+        fontSize: 13,
+        color: '#888',
+        marginTop: 2,
+    },
+    rideTypePriceContainer: {
+        alignItems: 'flex-end',
+    },
+    rideTypePrice: {
         fontSize: 18,
         fontWeight: '700',
         color: '#333',
         marginBottom: 4,
-    },
-    selectedText: {
-        color: '#219653',
-    },
-    vehicleDescription: {
-        fontSize: 14,
-        color: '#888',
-        marginBottom: 2,
-    },
-    vehicleEta: {
-        fontSize: 14,
-        color: '#666',
-        fontWeight: '500',
-    },
-    priceContainer: {
-        alignItems: 'flex-end',
-    },
-    vehiclePrice: {
-        fontSize: 20,
-        fontWeight: '800',
-        color: '#333',
-        marginBottom: 4,
-    },
-    selectedPriceText: {
-        color: '#219653',
-    },
-    rideTypeBadge: {
-        backgroundColor: '#219653',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
-    },
-    rideTypeBadgeText: {
-        color: '#fff',
-        fontSize: 11,
-        fontWeight: 'bold',
     },
     footer: {
         paddingHorizontal: 20,
@@ -1352,6 +1467,24 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderTopWidth: 1,
         borderTopColor: '#E5E5EA',
+    },
+    animatedConfirmButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#219653',
+        paddingVertical: 16,
+        borderRadius: 14,
+        elevation: 4,
+        shadowColor: '#219653',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+    },
+    confirmButtonText: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#fff',
     },
     confirmButton: {
         width: '100%',
@@ -1481,6 +1614,21 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         borderWidth: 2,
         borderColor: '#fff',
+    },
+    driverMarker: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#3498db',
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        borderWidth: 2,
+        borderColor: '#fff',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
     },
     loadingContainer: {
         flex: 1,

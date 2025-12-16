@@ -25,17 +25,17 @@ const { width, height } = Dimensions.get('window');
 const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiYWRhcnNobWlzaHJhNTYzIiwiYSI6ImNtZjlocXQydzBrZmYycnNqNGs5OTk3cXUifQ.jwUMhX7pbAGl7fI9rXt7mw';
 Mapbox.setAccessToken(MAPBOX_ACCESS_TOKEN);
 
-// Vehicle icon mapping
-const VEHICLE_ICONS: { [key: string]: string } = {
-    '1': 'motorcycle',
-    '2': 'car',
-    '3': 'car',
+// Ride type icon mapping
+const RIDE_TYPE_ICONS: { [key: string]: string } = {
+    'solo': 'person',
+    'shared': 'people',
+    'schedule': 'time',
 };
 
-const VEHICLE_NAMES: { [key: string]: string } = {
-    '1': 'Bike',
-    '2': 'E-Rickshaw',
-    '3': 'Toto',
+const RIDE_TYPE_NAMES: { [key: string]: string } = {
+    'solo': 'Solo Ride',
+    'shared': 'Shared Ride',
+    'schedule': 'Scheduled Ride',
 };
 
 interface Driver {
@@ -513,24 +513,26 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                 {/* OTP Display - Show when driver is found */}
                 {ridePhase !== 'searching' && startOtp && (
                     <View style={styles.otpContainer}>
-                        <Text style={styles.otpLabel}>Share this OTP with your driver</Text>
+                        <View>
+                            <Text style={styles.otpLabel}>OTP for Driver</Text>
+                            <Text style={styles.otpHint}>Share this code</Text>
+                        </View>
                         <Text style={styles.otpCode}>{startOtp}</Text>
-                        <Text style={styles.otpHint}>Driver will ask for this code</Text>
                     </View>
                 )}
 
                 <View style={styles.rideInfo}>
                     <View style={styles.vehicleRow}>
                         <View style={styles.vehicleIconCircle}>
-                            <Icon
-                                name={VEHICLE_ICONS[selectedVehicle] || 'motorcycle'}
+                            <Ionicons
+                                name={RIDE_TYPE_ICONS[rideType] || 'person'}
                                 size={24}
                                 color="#2D7C4F"
                             />
                         </View>
                         <View style={styles.vehicleDetails}>
                             <Text style={styles.vehicleName}>
-                                {VEHICLE_NAMES[selectedVehicle] || 'Bike'}
+                                {RIDE_TYPE_NAMES[rideType] || 'Solo Ride'}
                             </Text>
                             <Text style={styles.vehiclePrice}>₹{fare}</Text>
                         </View>
@@ -753,30 +755,31 @@ const styles = StyleSheet.create({
     },
     otpContainer: {
         backgroundColor: '#F0FFF4',
-        borderRadius: 16,
-        padding: 18,
+        borderRadius: 10,
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+        flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 18,
-        borderWidth: 2,
+        justifyContent: 'space-between',
+        marginBottom: 12,
+        borderWidth: 1.5,
         borderColor: '#219653',
         borderStyle: 'dashed',
     },
     otpLabel: {
-        fontSize: 14,
+        fontSize: 11,
         color: '#666',
-        marginBottom: 6,
         fontWeight: '500',
     },
     otpCode: {
-        fontSize: 36,
+        fontSize: 20,
         fontWeight: '800',
         color: '#219653',
-        letterSpacing: 8,
+        letterSpacing: 3,
     },
     otpHint: {
-        fontSize: 12,
+        fontSize: 9,
         color: '#888',
-        marginTop: 6,
     },
     rideInfo: {
         marginBottom: 15,
