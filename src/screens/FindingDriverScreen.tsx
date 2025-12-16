@@ -307,7 +307,7 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
         if (apiDriver && rideStatus === 'accepted') {
             setSearchingText(`${apiDriver.name} is on the way!`);
             setRidePhase('driver_found');
-            
+
             if (apiDriverLocation) {
                 setMovingDriverCoords([apiDriverLocation.lng, apiDriverLocation.lat]);
             }
@@ -488,16 +488,16 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                             </View>
                         )}
                         {ridePhase !== 'searching' && (
-                            <MaterialCommunityIcons 
-                                name={ridePhase === 'arrived' ? 'check-circle' : 'car-side'} 
-                                size={18} 
-                                color="#219653" 
+                            <MaterialCommunityIcons
+                                name={ridePhase === 'arrived' ? 'check-circle' : 'car-side'}
+                                size={18}
+                                color="#219653"
                                 style={{ marginRight: 8 }}
                             />
                         )}
                         <Text style={styles.searchingText}>{searchingText}</Text>
                     </View>
-                    
+
                     {/* Timer for ride phases */}
                     {(ridePhase === 'arriving' || ridePhase === 'in_progress') && (
                         <View style={styles.timerBadge}>
@@ -513,8 +513,9 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                 {/* OTP Display - Show when driver is found */}
                 {ridePhase !== 'searching' && startOtp && (
                     <View style={styles.otpContainer}>
-                        <Text style={styles.otpLabel}>Share this OTP with driver</Text>
+                        <Text style={styles.otpLabel}>Share this OTP with your driver</Text>
                         <Text style={styles.otpCode}>{startOtp}</Text>
+                        <Text style={styles.otpHint}>Driver will ask for this code</Text>
                     </View>
                 )}
 
@@ -584,13 +585,16 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                         </View>
                     </View>
                 ) : (
-                    <Text style={styles.waitTime}>Estimated wait: 2-3 minutes</Text>
+                    <View style={styles.waitTimeContainer}>
+                        <Text style={styles.waitTime}>Estimated wait: 2-3 minutes</Text>
+                        <Text style={styles.waitTimeHint}>We're finding the best driver for you ✨</Text>
+                    </View>
                 )}
 
                 {/* Action Button based on phase */}
                 {ridePhase === 'arrived' ? (
-                    <TouchableOpacity 
-                        style={[styles.cancelButton, { backgroundColor: '#219653', borderColor: '#219653' }]} 
+                    <TouchableOpacity
+                        style={[styles.cancelButton, { backgroundColor: '#219653', borderColor: '#219653' }]}
                         onPress={() => navigation.navigate('RatingTabs', { rideId })}
                     >
                         <Text style={[styles.cancelButtonText, { color: '#fff' }]}>Rate Your Ride</Text>
@@ -749,23 +753,30 @@ const styles = StyleSheet.create({
     },
     otpContainer: {
         backgroundColor: '#F0FFF4',
-        borderRadius: 12,
-        padding: 12,
+        borderRadius: 16,
+        padding: 18,
         alignItems: 'center',
-        marginBottom: 15,
-        borderWidth: 1,
+        marginBottom: 18,
+        borderWidth: 2,
         borderColor: '#219653',
+        borderStyle: 'dashed',
     },
     otpLabel: {
-        fontSize: 12,
+        fontSize: 14,
         color: '#666',
-        marginBottom: 4,
+        marginBottom: 6,
+        fontWeight: '500',
     },
     otpCode: {
-        fontSize: 24,
-        fontWeight: 'bold',
+        fontSize: 36,
+        fontWeight: '800',
         color: '#219653',
-        letterSpacing: 4,
+        letterSpacing: 8,
+    },
+    otpHint: {
+        fontSize: 12,
+        color: '#888',
+        marginTop: 6,
     },
     rideInfo: {
         marginBottom: 15,
@@ -788,14 +799,14 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     vehicleName: {
-        fontSize: 18,
-        fontWeight: '700',
+        fontSize: 20,
+        fontWeight: '800',
         color: '#333',
-        marginBottom: 2,
+        marginBottom: 4,
     },
     vehiclePrice: {
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 22,
+        fontWeight: '800',
         color: '#2D7C4F',
     },
     rideTypeBadge: {
@@ -836,9 +847,10 @@ const styles = StyleSheet.create({
         marginRight: 12,
     },
     locationText: {
-        fontSize: 14,
-        color: '#666',
+        fontSize: 15,
+        color: '#444',
         flex: 1,
+        fontWeight: '500',
     },
     driverCard: {
         backgroundColor: '#F8F9FA',
@@ -870,14 +882,15 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     driverName: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: '700',
         color: '#333',
-        marginBottom: 2,
+        marginBottom: 4,
     },
     driverVehicle: {
-        fontSize: 13,
+        fontSize: 14,
         color: '#666',
+        fontWeight: '500',
     },
     driverActions: {
         flexDirection: 'row',
@@ -893,12 +906,22 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#219653',
     },
+    waitTimeContainer: {
+        alignItems: 'center',
+        marginBottom: 15,
+        paddingVertical: 10,
+    },
     waitTime: {
-        fontSize: 14,
+        fontSize: 18,
         color: '#2D7C4F',
         textAlign: 'center',
-        fontWeight: '600',
-        marginBottom: 15,
+        fontWeight: '700',
+        marginBottom: 4,
+    },
+    waitTimeHint: {
+        fontSize: 13,
+        color: '#888',
+        textAlign: 'center',
     },
     cancelButton: {
         borderWidth: 2,

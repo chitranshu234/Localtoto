@@ -38,10 +38,12 @@ Mapbox.setAccessToken(MAPBOX_ACCESS_TOKEN);
 
 const RECENT_ADDRESSES_KEY = '@localtoto_recent_addresses';
 
+
 const VEHICLES = [
     {
         id: '1',
         name: 'Bike',
+        description: 'Quick & affordable',
         price: '₹25',
         eta: '2 min',
         capacity: '1 seat',
@@ -51,6 +53,7 @@ const VEHICLES = [
     {
         id: '2',
         name: 'E-Rickshaw',
+        description: 'Eco-friendly rides',
         price: '₹45',
         eta: '4 min',
         capacity: '2 seats',
@@ -60,6 +63,7 @@ const VEHICLES = [
     {
         id: '3',
         name: 'Toto',
+        description: 'Comfy, spacious auto',
         price: '₹65',
         eta: '6 min',
         capacity: '4 seats',
@@ -651,8 +655,9 @@ const ConfirmScreen = ({ navigation, route }: any) => {
             </View>
 
             <View style={styles.vehicleHeader}>
-                <Text style={styles.sectionTitle}>Choose a ride</Text>
+                <Text style={styles.sectionTitle}>Choose your ride</Text>
             </View>
+            <Text style={styles.sectionSubtitle}>Best prices in your city ✨</Text>
 
             <View style={styles.vehicleList}>
                 {VEHICLES.map((vehicle) => (
@@ -664,7 +669,10 @@ const ConfirmScreen = ({ navigation, route }: any) => {
                         ]}
                         onPress={() => handleVehicleSelect(vehicle.id)}
                     >
-                        <View style={styles.vehicleImageContainer}>
+                        <View style={[
+                            styles.vehicleImageContainer,
+                            vehicle.name === 'Toto' && styles.vehicleImageContainerLarge
+                        ]}>
                             <Image
                                 source={vehicle.image}
                                 style={[
@@ -679,6 +687,7 @@ const ConfirmScreen = ({ navigation, route }: any) => {
                                 styles.vehicleName,
                                 selectedVehicle === vehicle.id && styles.selectedText
                             ]}>{vehicle.name}</Text>
+                            <Text style={styles.vehicleDescription}>{vehicle.description}</Text>
                             <Text style={styles.vehicleEta}>{vehicle.eta} • {vehicle.capacity}</Text>
                         </View>
                         <View style={styles.priceContainer}>
@@ -1045,7 +1054,7 @@ const styles = StyleSheet.create({
     },
     locationSummaryText: {
         flex: 1,
-        fontSize: 13,
+        fontSize: 15,
         color: '#333',
         marginLeft: 10,
     },
@@ -1144,9 +1153,16 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
     sectionTitle: {
-        fontSize: 18,
+        fontSize: 22,
         fontWeight: 'bold',
         color: '#333',
+        marginBottom: 8,
+    },
+    sectionSubtitle: {
+        fontSize: 16,
+        color: '#2D7C4F',
+        fontWeight: '500',
+        marginTop: -4,
         marginBottom: 15,
     },
     searchContainer: {
@@ -1263,42 +1279,55 @@ const styles = StyleSheet.create({
         borderWidth: 2,
     },
     vehicleImageContainer: {
-        width: 60,
-        height: 40,
+        width: 75,
+        height: 75,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 15,
+        backgroundColor: '#F8FFF8',
+        borderRadius: 10,
+        padding: 5,
     },
     vehicleImage: {
         width: '100%',
         height: '100%',
     },
     vehicleImageSmaller: {
-        width: '80%',
-        height: '80%',
+        width: '82%',
+        height: '82%',
+    },
+    vehicleImageContainerLarge: {
+        width: 85,
+        height: 85,
     },
     vehicleinfo: {
         flex: 1,
     },
     vehicleName: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 18,
+        fontWeight: '700',
         color: '#333',
         marginBottom: 4,
     },
     selectedText: {
         color: '#219653',
     },
+    vehicleDescription: {
+        fontSize: 14,
+        color: '#888',
+        marginBottom: 2,
+    },
     vehicleEta: {
-        fontSize: 12,
+        fontSize: 14,
         color: '#666',
+        fontWeight: '500',
     },
     priceContainer: {
         alignItems: 'flex-end',
     },
     vehiclePrice: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 20,
+        fontWeight: '800',
         color: '#333',
         marginBottom: 4,
     },
@@ -1307,13 +1336,13 @@ const styles = StyleSheet.create({
     },
     rideTypeBadge: {
         backgroundColor: '#219653',
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
     },
     rideTypeBadgeText: {
         color: '#fff',
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 'bold',
     },
     footer: {
