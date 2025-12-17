@@ -5,10 +5,11 @@ import {
     Image,
     StyleSheet,
     Dimensions,
-    SafeAreaView,
+
     TouchableOpacity,
     Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Button from '../components/Button';
@@ -61,13 +62,13 @@ const DriverFoundScreen = () => {
                     </Text>
                     <View>
                         <Text style={styles.subtitle}>
-                        Your driver is on the way.
-                  </Text>
-                  
+                            Your driver is on the way.
+                        </Text>
+
                     </View>
-                    
-                  
-                    
+
+
+
                 </View>
 
                 <View style={styles.driverInfoContainer}>

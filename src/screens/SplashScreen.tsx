@@ -59,48 +59,26 @@ const SplashScreen = ({ navigation }: any) => {
                     reduxAuthenticated: isAuthenticated
                 });
 
-                // If no access token but we have a refresh token, try to refresh
-                if (!accessToken && refreshToken) {
-                    console.log('🔄 Access token missing, attempting refresh...');
-                    try {
-                        const response = await fetch(
-                            'https://django-backend-production-43a6.up.railway.app/api/users/refresh',
-                            {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ refresh: refreshToken }),
-                            }
-                        );
-                        const data = await response.json();
-
-                        if (data.token) {
-                            console.log('✅ Token refreshed successfully!');
-                            await AsyncStorage.setItem('access_token', data.token);
-                            accessToken = data.token;
-                        } else {
-                            console.log('❌ Token refresh failed - response:', data);
-                        }
-                    } catch (refreshError) {
-                        console.error('❌ Token refresh error:', refreshError);
-                    }
-                }
-
-                // If still no token and Redux says authenticated, force logout
-                if (!accessToken && isAuthenticated) {
-                    console.log('🔄 No valid token - forcing logout...');
+                // If no tokens at all and Redux says authenticated, force logout
+                if (!accessToken && !refreshToken && isAuthenticated) {
+                    console.log('🔄 No tokens found - forcing logout...');
                     dispatch(logout());
                     return;
                 }
 
-                // If we have a token, try to load user profile
-                if (accessToken) {
+                // If we have either token, try to load user profile
+                // The client.ts interceptor will automatically handle token refresh
+                // if access_token is missing but refresh_token exists.
+                if (accessToken || refreshToken) {
                     try {
-                        console.log('✅ Token found, fetching user profile...');
+                        console.log('✅ Token(s) found, attempting to fetch user profile...');
                         await dispatch(fetchUserProfile()).unwrap();
                         console.log('✅ User profile loaded - AppNavigator will show App stack');
                     } catch (error: any) {
                         console.warn('⚠️ Profile fetch failed:', error);
-                        // Don't logout here - the Axios interceptor will handle 401s
+                        // If profile fetch fails (e.g. invalid refresh token), 
+                        // we might want to logout, but for now we keep existing behavior
+                        // and let the user land on the auth screen if needed.
                     }
                 }
 

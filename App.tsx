@@ -6,7 +6,7 @@
  */
 
 import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+import { StatusBar, StyleSheet, useColorScheme, View, LogBox } from 'react-native';
 import {
   SafeAreaProvider,
   SafeAreaView,
@@ -19,6 +19,11 @@ import { store, persistor } from './src/store';
 
 import AppNavigator from './src/navigation/AppNavigator';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+// Ignore third-party library deprecation warnings
+LogBox.ignoreLogs([
+  'SafeAreaView has been deprecated',
+]);
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
   const html = `

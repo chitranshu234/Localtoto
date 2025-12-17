@@ -5,12 +5,13 @@ import {
     Image,
     StyleSheet,
     Dimensions,
-    SafeAreaView,
+
     TouchableOpacity,
     TextInput,
     ScrollView,
     Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Button from '../components/Button';
@@ -119,10 +120,10 @@ const RatingScreen = () => {
         return (
             <View style={styles.optionsContainer}>
                 {options.map((option) => {
-                    const IconComponent = option.iconSet === 'MaterialCommunityIcons' 
-                        ? MaterialCommunityIcons 
+                    const IconComponent = option.iconSet === 'MaterialCommunityIcons'
+                        ? MaterialCommunityIcons
                         : Icon;
-                    
+
                     return (
                         <TouchableOpacity
                             key={option.id}
@@ -133,9 +134,9 @@ const RatingScreen = () => {
                             onPress={() => toggleIssue(option.id)}
                             activeOpacity={0.7}
                         >
-                            <IconComponent 
-                                name={option.icon} 
-                                size={18} 
+                            <IconComponent
+                                name={option.icon}
+                                size={18}
                                 color={selectedIssues.includes(option.id) ? '#27ae60' : '#666'}
                                 style={styles.optionIcon}
                             />
@@ -194,9 +195,9 @@ const RatingScreen = () => {
                             {rating > 0 && (
                                 <Text style={styles.ratingText}>
                                     {rating === 5 ? 'Excellent!' :
-                                     rating === 4 ? 'Very Good' :
-                                     rating === 3 ? 'Good' :
-                                     rating === 2 ? 'Poor' : 'Very Poor'}
+                                        rating === 4 ? 'Very Good' :
+                                            rating === 3 ? 'Good' :
+                                                rating === 2 ? 'Poor' : 'Very Poor'}
                                 </Text>
                             )}
                         </View>
@@ -287,7 +288,7 @@ const RatingScreen = () => {
                                 variant="primary"
                                 style={styles.submitButton}
                             />
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.bookButton}
                                 onPress={handleBookAnother}
                             >

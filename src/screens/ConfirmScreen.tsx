@@ -28,6 +28,7 @@ import { BottomSheetModal, BottomSheetModalProvider, BottomSheetScrollView } fro
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import ReanimatedModule, { useSharedValue, useAnimatedStyle, withSpring, interpolate, Extrapolate } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { geocodingService } from '../services/api/geocoding';
 // Redux
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { calculateFare as calculateFareAPI, bookRide, clearBooking } from '../store/slices/bookingSlice';
@@ -136,6 +137,10 @@ const ConfirmScreen = ({ navigation, route }: any) => {
     const [routeCoordinates, setRouteCoordinates] = useState<any[]>([]);
     const [rideFare, setRideFare] = useState<any>(null);
 
+    // --- State: Individual Fares for each ride type ---
+    const [privateFare, setPrivateFare] = useState<number | null>(null);
+    const [sharedFare, setSharedFare] = useState<number | null>(null);
+
     // --- Refs ---
     const bottomSheetModalRef = useRef<any>(null);
     const cameraRef = useRef<any>(null);
@@ -202,6 +207,8 @@ const ConfirmScreen = ({ navigation, route }: any) => {
             setRouteCoordinates([]);
         }
     }, [pickupLocation, dropLocation]);
+
+    // 4b. (Removed - fares are now calculated together in calculateRoute)
 
     // 5. Adjust Camera
     useEffect(() => {
@@ -396,14 +403,8 @@ const ConfirmScreen = ({ navigation, route }: any) => {
 
     const reverseGeocode = async (lat: number, lng: number): Promise<string | null> => {
         try {
-            const response = await fetch(
-                `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_ACCESS_TOKEN}`
-            );
-            const data = await response.json();
-            if (data.features && data.features.length > 0) {
-                return data.features[0].place_name;
-            }
-            return null;
+            const result = await geocodingService.reverseGeocode(lat, lng);
+            return result.address || null;
         } catch (error) {
             console.error('Reverse geocode error:', error);
             return null;
@@ -418,29 +419,19 @@ const ConfirmScreen = ({ navigation, route }: any) => {
 
         setIsSearching(true);
         try {
-            const proximity = (activeInput === 'drop' && pickupLocation)
-                ? `${pickupLocation.longitude},${pickupLocation.latitude}`
-                : '79.4833,29.0333';
+            const results = await geocodingService.geocode(query);
 
-            const response = await fetch(
-                `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?` +
-                `access_token=${MAPBOX_ACCESS_TOKEN}&` +
-                `proximity=${proximity}&` +
-                `country=IN&` +
-                `limit=5&` +
-                `types=poi,address,place,locality`
-            );
-            const data = await response.json();
-
-            if (data.features) {
-                const formattedSuggestions: LocationSuggestion[] = data.features.map((feature: any, index: number) => ({
-                    id: feature.id || `${index}`,
-                    title: feature.text || feature.place_name.split(',')[0],
-                    address: feature.place_name,
-                    latitude: feature.center[1],
-                    longitude: feature.center[0],
+            if (results && results.length > 0) {
+                const formattedSuggestions: LocationSuggestion[] = results.map((result: any, index: number) => ({
+                    id: result.id || result.place_id || `${index}`,
+                    title: result.name || result.address?.split(',')[0] || 'Location',
+                    address: result.address || result.display_name || '',
+                    latitude: result.lat,
+                    longitude: result.lng,
                 }));
                 setSuggestions(formattedSuggestions);
+            } else {
+                setSuggestions([]);
             }
         } catch (error) {
             console.error('Search error:', error);
@@ -454,32 +445,53 @@ const ConfirmScreen = ({ navigation, route }: any) => {
         if (!pickupLocation || !dropLocation) return;
 
         try {
-            const response = await fetch(
-                `https://api.mapbox.com/directions/v5/mapbox/driving/` +
-                `${pickupLocation.longitude},${pickupLocation.latitude};` +
-                `${dropLocation.longitude},${dropLocation.latitude}?` +
-                `geometries=geojson&access_token=${MAPBOX_ACCESS_TOKEN}`
+            const routeResult = await geocodingService.getRoute(
+                { lat: pickupLocation.latitude, lng: pickupLocation.longitude },
+                { lat: dropLocation.latitude, lng: dropLocation.longitude }
             );
-            const data = await response.json();
 
-            if (data.routes && data.routes.length > 0) {
-                const routeData = data.routes[0];
-                setRouteCoordinates(routeData.geometry.coordinates);
+            if (routeResult.success && routeResult.coordinates && routeResult.coordinates.length > 0) {
+                setRouteCoordinates(routeResult.coordinates);
 
-                const distanceInKm = routeData.distance / 1000;
-                const estimatedTime = Math.round(routeData.duration / 60);
+                const distanceInKm = parseFloat(routeResult.distanceKm) || routeResult.distance / 1000;
+                const estimatedTime = routeResult.durationMinutes || Math.round(routeResult.duration / 60);
 
-                const rideType = selectedRideType === 'shared' ? 'shared' : 'private';
-                dispatch(calculateFareAPI({
-                    pickup: { lat: pickupLocation.latitude, lng: pickupLocation.longitude },
-                    dropoff: { lat: dropLocation.latitude, lng: dropLocation.longitude },
-                    rideType: rideType,
-                }));
+                // Calculate BOTH private and shared fares
+                const pickupCoords = { lat: pickupLocation.latitude, lng: pickupLocation.longitude };
+                const dropoffCoords = { lat: dropLocation.latitude, lng: dropLocation.longitude };
+
+                // Fetch private fare
+                let fareDistance = 0;
+                let fareDuration = 0;
+                try {
+                    const privateResult = await dispatch(calculateFareAPI({
+                        pickup: pickupCoords,
+                        dropoff: dropoffCoords,
+                        rideType: 'private',
+                    })).unwrap();
+                    setPrivateFare(privateResult.fare);
+                    // Use distance/duration from fare API (more accurate for pricing)
+                    fareDistance = privateResult.distance || 0;
+                    fareDuration = privateResult.duration || 0;
+                } catch (e) {
+                    console.error('Private fare error:', e);
+                }
+
+                // Fetch shared fare
+                try {
+                    const sharedResult = await dispatch(calculateFareAPI({
+                        pickup: pickupCoords,
+                        dropoff: dropoffCoords,
+                        rideType: 'shared',
+                    })).unwrap();
+                    setSharedFare(sharedResult.fare);
+                } catch (e) {
+                    console.error('Shared fare error:', e);
+                }
 
                 setRideFare({
-                    distance: distanceInKm.toFixed(1),
-                    estimatedTime: estimatedTime,
-                    total: estimatedFare || 0,
+                    distance: Math.round(fareDistance),
+                    estimatedTime: fareDuration,
                 });
             }
         } catch (error) {
@@ -563,7 +575,7 @@ const ConfirmScreen = ({ navigation, route }: any) => {
         animateButtonPress();
 
         const rideType = selectedRideType === 'shared' ? 'shared' : 'private';
-        const fare = estimatedFare || rideFare?.total || 25;
+        const fare = selectedRideType === 'shared' ? (sharedFare || 0) : (privateFare || 0);
 
         try {
             const result = await dispatch(bookRide({
@@ -774,13 +786,15 @@ const ConfirmScreen = ({ navigation, route }: any) => {
                                 styles.rideTypeName,
                                 selectedRideType === rideType.id && { color: rideType.color }
                             ]}>{rideType.name}</Text>
-                            <Text style={styles.rideTypeDescription}>{rideType.description}</Text>
+                            <Text style={styles.rideTypeDescription}>
+                                {rideFare ? `${Math.round(rideFare.distance)} km • ${typeof rideFare.estimatedTime === 'number' ? rideFare.estimatedTime + ' mins' : rideFare.estimatedTime}` : rideType.description}
+                            </Text>
                         </View>
                         <View style={styles.rideTypePriceContainer}>
                             <Text style={[
                                 styles.rideTypePrice,
                                 selectedRideType === rideType.id && { color: rideType.color }
-                            ]}>₹{estimatedFare || rideFare?.total || 0}</Text>
+                            ]}>₹{rideType.id === 'shared' ? (sharedFare || 0) : (privateFare || 0)}</Text>
                             {selectedRideType === rideType.id && (
                                 <Ionicons name="checkmark-circle" size={20} color={rideType.color} />
                             )}
@@ -881,7 +895,7 @@ const ConfirmScreen = ({ navigation, route }: any) => {
                         ))}
 
                         <Text style={styles.confirmButtonText}>
-                            Confirm Ride • ₹{estimatedFare || rideFare?.total || 0}
+                            Confirm Ride • ₹{selectedRideType === 'shared' ? (sharedFare || 0) : (privateFare || 0)}
                         </Text>
                         <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
                     </Pressable>

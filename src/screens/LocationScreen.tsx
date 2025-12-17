@@ -5,12 +5,12 @@ import {
     Image,
     StyleSheet,
     Dimensions,
-    SafeAreaView,
     PermissionsAndroid,
     Platform,
     Alert,
     ToastAndroid,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '../components/Button';
 
 const { width, height } = Dimensions.get('window');

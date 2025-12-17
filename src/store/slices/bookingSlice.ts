@@ -76,10 +76,15 @@ export const calculateFare = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
+            // Map rideType: 'solo'/'schedule' -> 'private', 'shared' -> 'shared'
+            const apiRideType = payload.rideType === 'solo' || payload.rideType === 'schedule'
+                ? 'private'
+                : payload.rideType;
+
             const response = await client.post<FareResponse>('/bookings/calculate-fare', {
-                pickup: payload.pickup,
-                dropoff: payload.dropoff,
-                rideType: payload.rideType,
+                pickup: { coords: { lat: payload.pickup.lat, lng: payload.pickup.lng } },
+                dropoff: { coords: { lat: payload.dropoff.lat, lng: payload.dropoff.lng } },
+                rideType: apiRideType,
             });
             console.log('✅ Fare calculated:', response.data);
             return response.data;

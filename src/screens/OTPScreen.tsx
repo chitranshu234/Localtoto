@@ -5,12 +5,12 @@ import {
     TextInput,
     StyleSheet,
     TouchableOpacity,
-    SafeAreaView,
     StatusBar,
     Dimensions,
     Platform,
     Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Button from '../components/Button';
 import { useAppDispatch, useAppSelector } from '../store/hooks';

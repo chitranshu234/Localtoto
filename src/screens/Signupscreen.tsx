@@ -13,27 +13,17 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import CountryPicker, { Country, CountryCode } from 'react-native-country-picker-modal';
 import { authService } from '../services/api/auth';
 
 const { width } = Dimensions.get('window');
 
 const SignUpScreen = ({ navigation }: any) => {
   const [phone, setPhone] = useState('');
-  const [countryCode, setCountryCode] = useState<CountryCode>('IN');
-  const [callingCode, setCallingCode] = useState('91');
-  const [countryPickerVisible, setCountryPickerVisible] = useState(false);
-
-  const onSelectCountry = (country: Country) => {
-    setCountryCode(country.cca2);
-    setCallingCode(country.callingCode[0]);
-    console.log('Selected country:', country.name, 'Code:', country.callingCode[0]);
-  };
 
   const handleSendOTP = async () => {
     if (phone.length >= 10) {
       try {
-        const formattedPhone = `+${callingCode}${phone}`;
+        const formattedPhone = `+91${phone}`;
         console.log('Sending OTP to:', formattedPhone);
         console.log('Request payload:', { phoneNumber: phone });
         await authService.sendOtp({ phoneNumber: phone });
@@ -81,28 +71,10 @@ const SignUpScreen = ({ navigation }: any) => {
             </View>
 
             <View style={styles.mobileContainer}>
-              <TouchableOpacity
-                style={styles.countryCode}
-                onPress={() => setCountryPickerVisible(true)}
-                activeOpacity={0.7}
-              >
-                <CountryPicker
-                  countryCode={countryCode}
-                  withFilter
-                  withFlag
-                  withCallingCode
-                  withEmoji
-                  onSelect={onSelectCountry}
-                  visible={countryPickerVisible}
-                  onClose={() => setCountryPickerVisible(false)}
-                  containerButtonStyle={styles.countryPickerButton}
-                  theme={{
-                    backgroundColor: '#f9f9f9',
-                    onBackgroundTextColor: '#333',
-                  }}
-                />
-                <Text style={styles.countryCodeText}>+{callingCode}</Text>
-              </TouchableOpacity>
+              <View style={styles.countryCode}>
+                <Text style={styles.flagEmoji}>🇮🇳</Text>
+                <Text style={styles.countryCodeText}>+91</Text>
+              </View>
 
               <TextInput
                 style={styles.mobileInput}
@@ -229,11 +201,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
     backgroundColor: '#f9f9f9',
-    gap: 8,
+    gap: 6,
   },
-  countryPickerButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  flagEmoji: {
+    fontSize: 18,
   },
   countryCodeText: {
     fontSize: 14,

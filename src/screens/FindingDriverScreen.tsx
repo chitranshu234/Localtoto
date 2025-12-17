@@ -18,6 +18,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 // Redux
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { getRideDetails, cancelRide, clearRide } from '../store/slices/rideSlice';
+import { geocodingService } from '../services/api/geocoding';
 
 const { width, height } = Dimensions.get('window');
 
@@ -115,19 +116,22 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
         return drivers;
     };
 
-    // Calculate route
+    // Calculate route using backend API
     const calculateRoute = async () => {
         try {
-            const response = await fetch(
-                `https://api.mapbox.com/directions/v5/mapbox/driving/` +
-                `${pickup.longitude},${pickup.latitude};` +
-                `${dropoff.longitude},${dropoff.latitude}?` +
-                `geometries=geojson&access_token=${MAPBOX_ACCESS_TOKEN}`
+            const routeData = await geocodingService.getRoute(
+                { lat: pickup.latitude, lng: pickup.longitude },
+                { lat: dropoff.latitude, lng: dropoff.longitude }
             );
-            const data = await response.json();
 
-            if (data.routes && data.routes.length > 0) {
-                setRouteCoordinates(data.routes[0].geometry.coordinates);
+            if (routeData.success && routeData.coordinates && routeData.coordinates.length > 0) {
+                setRouteCoordinates(routeData.coordinates);
+            } else {
+                // Fallback to straight line if route fails
+                setRouteCoordinates([
+                    [pickup.longitude, pickup.latitude],
+                    [dropoff.longitude, dropoff.latitude],
+                ]);
             }
         } catch (error) {
             console.error('Route calculation error:', error);
