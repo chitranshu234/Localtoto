@@ -19,6 +19,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { getRideDetails, cancelRide, clearRide } from '../store/slices/rideSlice';
 import { geocodingService } from '../services/api/geocoding';
+import Button from '@components/Button';
 
 const { width, height } = Dimensions.get('window');
 
@@ -609,8 +610,14 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                     <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
                         <Text style={styles.cancelButtonText}>Cancel Request</Text>
                     </TouchableOpacity>
+                    
                 )}
+                 <TouchableOpacity style={styles.paymentButton} >
+                        <Text style={styles.completeButtonText}>Complete Payment</Text>
+                    </TouchableOpacity>
             </View>
+               
+
         </GestureHandlerRootView>
     );
 };
@@ -942,6 +949,23 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#EB5757',
     },
+    paymentButton:{
+         borderWidth: 2,
+        borderColor: '#88eb57ff',
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+        height:70,
+        width:280,
+        alignSelf:'center',
+        backgroundColor:'black'
+    },
+    completeButtonText:{
+         fontSize: 16,
+        fontWeight: '600',
+        color: '#72eb57ff',
+    }
+
 });
 
 export default FindingDriverScreen;
