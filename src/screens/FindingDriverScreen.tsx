@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, use } from 'react';
 import {
     View,
     Text,
@@ -20,6 +20,10 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { getRideDetails, cancelRide, clearRide } from '../store/slices/rideSlice';
 import { geocodingService } from '../services/api/geocoding';
 import Button from '@components/Button';
+import RazorpayCheckout from 'react-native-razorpay';
+import client from '@services/api/client';
+import { getRazorpayKey } from '@services/razorpay';
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -50,6 +54,8 @@ interface Driver {
     vehicleType: string;
 }
 
+
+
 const FindingDriverScreen = ({ navigation, route }: any) => {
     // Get params from ConfirmScreen
     const routeParams = route?.params || {};
@@ -72,6 +78,8 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
     const [driverArrived, setDriverArrived] = useState(false);
     const [movingDriverCoords, setMovingDriverCoords] = useState<[number, number] | null>(null);
     const [searchingText, setSearchingText] = useState('Finding your driver...');
+    const [ orderid,setOrderId] =useState('');
+    const [ paymentid,setPaymentId] =useState('');
 
     // Ride phase state: searching → driver_found → arriving → in_progress → arrived
     const [ridePhase, setRidePhase] = useState<'searching' | 'driver_found' | 'arriving' | 'in_progress' | 'arrived'>('searching');
@@ -92,6 +100,85 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
+
+
+    const onPay = async () => {
+  try {
+    let currentPaymentId = '';
+    let currentOrderId = '';
+
+    // STEP 1: Create Order (Same backend)
+    if (!currentPaymentId) {
+      const or = await client.post('/payments/create-order', {
+        bookingId: rideId,
+        amount: fare
+      });
+
+      if (!or.data?.success) {
+        Alert.alert('Payment Error', or.data?.message || 'Order creation failed');
+        return;
+      }
+
+      currentOrderId = or.data.orderId;
+      currentPaymentId = or.data.paymentId;
+
+      setOrderId(currentOrderId);
+      setPaymentId(currentPaymentId);
+    }
+
+    if (!currentOrderId) {
+      Alert.alert('Payment Error', 'Order ID missing');
+      return;
+    }
+
+    // STEP 2: Get Razorpay Key
+    const razorpayKey = await getRazorpayKey();
+    if (!razorpayKey) {
+      Alert.alert('Payment Error', 'Payment gateway unavailable');
+      return;
+    }
+
+    // STEP 3: Open Razorpay Checkout
+    const options = {
+      key: razorpayKey,
+      amount: Math.round(Number(fare) * 100),
+      currency: 'INR',
+      name: 'LocalToto',
+      description: 'Ride Payment',
+      order_id: currentOrderId,
+      prefill: {
+        contact:  'sdfkshf',
+        email:  'dsfdgdfgc',
+      },
+      theme: { color: '#219653' },
+    };
+
+    const response = await RazorpayCheckout.open(options);
+
+    // STEP 4: Verify Payment (Backend)
+    const vr = await client.post('/payments/verify-razorpay', {
+      bookingId: rideId,
+      paymentId: currentPaymentId,
+      razorpay_order_id: response.razorpay_order_id,
+      razorpay_payment_id: response.razorpay_payment_id,
+      razorpay_signature: response.razorpay_signature,
+    });
+
+    if (vr.data?.success) {
+      Alert.alert('Success', 'Payment completed successfully');
+      // navigate / update status
+    } else {
+      Alert.alert('Payment Failed', vr.data?.message || 'Verification failed');
+    }
+
+  } catch (err: any) {
+    console.log('Razorpay Error:', err);
+    Alert.alert(
+      'Payment Cancelled',
+      err?.description || 'Payment was not completed'
+    );
+  }
+};
 
     // Generate mock drivers near pickup
     const generateMockDrivers = (lat: number, lng: number): Driver[] => {
@@ -612,7 +699,7 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                     </TouchableOpacity>
                     
                 )}
-                 <TouchableOpacity style={styles.paymentButton} >
+                 <TouchableOpacity style={styles.paymentButton}  onPress={onPay} >
                         <Text style={styles.completeButtonText}>Complete Payment</Text>
                     </TouchableOpacity>
             </View>
