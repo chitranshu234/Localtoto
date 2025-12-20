@@ -815,9 +815,37 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                     </TouchableOpacity>
 
                 )}
-                <TouchableOpacity style={styles.button} onPress={onPay} activeOpacity={0.8}>
-                    <Text style={styles.text}>Pay Now</Text>
-                </TouchableOpacity>
+               Payment Row */
+            /* <View style={styles.compactPaymentRow}>
+                <Text style={styles.compactPaymentLabel}>Pay by</Text>
+                <View style={styles.compactPaymentOptions}>
+                   <TouchableOpacity
+  style={[styles.compactPaymentBtn, styles.compactPaymentBtnActive]}
+  onPress={() =>
+    Alert.alert(
+      'Payment Method',
+      'You selected Cash payment',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'OK', onPress: () => console.log('Cash selected') },
+      ],
+      { cancelable: true }
+    )
+  }
+>
+  <Text style={[styles.compactPaymentText, styles.compactPaymentTextActive]}>
+    Cash
+  </Text>
+</TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.compactPaymentBtn, styles.compactPaymentBtnActive]}
+                       onPress={onPay}
+                    >
+                        <Text style={[styles.compactPaymentText, styles.compactPaymentTextActive]}>UPI</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
 
             </View>
         </GestureHandlerRootView>
@@ -1184,6 +1212,53 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         letterSpacing: 0.5,
+    },
+      compactPaymentRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+        marginTop: 12,
+    },
+    compactPaymentLabel: {
+        fontSize: 15,
+        color: '#555',
+        fontWeight: '600',
+    },
+    compactPaymentOptions: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    compactPaymentBtn: {
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 18,
+        backgroundColor: '#f5f5f5',
+    },
+    compactPaymentBtnActive: {
+        backgroundColor: '#219653',
+    },
+    compactPaymentText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#666',
+    },
+    compactPaymentTextActive: {
+        color: '#fff',
+    },
+    compactConfirmButton: {
+        backgroundColor: '#219653',
+        borderRadius: 12,
+        paddingVertical: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 4,
+    },
+    compactConfirmText: {
+        color: '#fff',
+        fontSize: 17,
+        fontWeight: '700',
     },
 });
 
