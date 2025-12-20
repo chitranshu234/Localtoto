@@ -1402,7 +1402,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         paddingHorizontal: 15,
         height: 50,
-        marginBottom: 80
+        marginBottom: 30
     },
     searchIcon: {
         marginRight: 10,
