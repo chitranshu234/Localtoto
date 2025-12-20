@@ -819,15 +819,18 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
             /* <View style={styles.compactPaymentRow}>
                 <Text style={styles.compactPaymentLabel}>Pay by</Text>
                 <View style={styles.compactPaymentOptions}>
-                   <TouchableOpacity
+                 <TouchableOpacity
   style={[styles.compactPaymentBtn, styles.compactPaymentBtnActive]}
   onPress={() =>
     Alert.alert(
-      'Payment Method',
-      'You selected Cash payment',
+      'Confirm Payment Method',
+      'You have selected Cash as your payment method. Do you want to continue?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'OK', onPress: () => console.log('Cash selected') },
+        {
+          text: 'Confirm',
+          onPress: () => console.log('Cash payment confirmed'),
+        },
       ],
       { cancelable: true }
     )
@@ -837,6 +840,7 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
     Cash
   </Text>
 </TouchableOpacity>
+
 
                     <TouchableOpacity
                         style={[styles.compactPaymentBtn, styles.compactPaymentBtnActive]}
@@ -1218,7 +1222,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         marginBottom: 12,
-        marginTop: 16,
+        marginTop: 18,
     },
     compactPaymentLabel: {
         fontSize: 20,
