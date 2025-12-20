@@ -1218,10 +1218,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         marginBottom: 12,
-        marginTop: 12,
+        marginTop: 16,
     },
     compactPaymentLabel: {
-        fontSize: 15,
+        fontSize: 20,
         color: '#555',
         fontWeight: '600',
     },
