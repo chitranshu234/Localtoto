@@ -30,7 +30,7 @@ const { width, height } = Dimensions.get('window');
 // Mapbox Access Token
 const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiYWRhcnNobWlzaHJhNTYzIiwiYSI6ImNtZjlocXQydzBrZmYycnNqNGs5OTk3cXUifQ.jwUMhX7pbAGl7fI9rXt7mw';
 Mapbox.setAccessToken(MAPBOX_ACCESS_TOKEN); 
- 
+   
 // Ride type icon mapping
 const RIDE_TYPE_ICONS: { [key: string]: string } = {
     'solo': 'person',
