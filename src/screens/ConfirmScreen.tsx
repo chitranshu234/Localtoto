@@ -872,7 +872,7 @@ const ConfirmScreen = ({ navigation, route }: any) => {
             </View>
 
             {/* Payment Row */}
-            <View style={styles.compactPaymentRow}>
+            {/* <View style={styles.compactPaymentRow}>
                 <Text style={styles.compactPaymentLabel}>Pay by</Text>
                 <View style={styles.compactPaymentOptions}>
                     <TouchableOpacity
@@ -888,7 +888,7 @@ const ConfirmScreen = ({ navigation, route }: any) => {
                         <Text style={[styles.compactPaymentText, paymentMethod === 'upi' && styles.compactPaymentTextActive]}>UPI</Text>
                     </TouchableOpacity>
                 </View>
-            </View>
+            </View> */}
 
             {/* Confirm Button - with extra bottom margin for tab bar */}
             <Pressable
@@ -1402,7 +1402,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         paddingHorizontal: 15,
         height: 50,
-        marginBottom: 20,
+        marginBottom: 80
     },
     searchIcon: {
         marginRight: 10,

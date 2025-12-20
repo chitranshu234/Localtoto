@@ -19,6 +19,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { getRideDetails, cancelRide, clearRide } from '../store/slices/rideSlice';
 import { geocodingService } from '../services/api/geocoding';
+import RazorpayCheckout from 'react-native-razorpay';
+import client from '@services/api/client';
+import { getRazorpayKey } from '@services/razorpay';
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -73,6 +77,8 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
     const [driverArrived, setDriverArrived] = useState(false);
     const [movingDriverCoords, setMovingDriverCoords] = useState<[number, number] | null>(null);
     const [searchingText, setSearchingText] = useState('Finding your driver...');
+    const [orderid, setOrderId] = useState('');
+    const [paymentid, setPaymentId] = useState('');
 
     // Ride phase state: searching → driver_found → arriving → in_progress → arrived
     const [ridePhase, setRidePhase] = useState<'searching' | 'driver_found' | 'arriving' | 'in_progress' | 'arrived'>('searching');
@@ -119,6 +125,92 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
         }
         return drivers;
     };
+
+
+    const onPay = async () => {
+        try {
+            let currentPaymentId = '';
+            let currentOrderId = '';
+
+            // STEP 1: Create Order (Same backend)
+            if (!currentPaymentId) {
+                const or = await client.post('/payments/create-order', {
+                    bookingId: rideId,
+                    amount: fare
+                });
+
+                if (!or.data?.success) {
+                    Alert.alert('Payment Error', or.data?.message || 'Order creation failed');
+                    return;
+                }
+
+                currentOrderId = or.data.orderId;
+                currentPaymentId = or.data.paymentId;
+
+                setOrderId(currentOrderId);
+                setPaymentId(currentPaymentId);
+            }
+
+            if (!currentOrderId) {
+                Alert.alert('Payment Error', 'Order ID missing');
+                return;
+            }
+
+            // STEP 2: Get Razorpay Key
+            const razorpayKey = await getRazorpayKey();
+            if (!razorpayKey) {
+                Alert.alert('Payment Error', 'Payment gateway unavailable');
+                return;
+            }
+
+            // STEP 3: Open Razorpay Checkout
+            const options = {
+                key: razorpayKey,
+                amount: Math.round(Number(fare) * 100),
+                currency: 'INR',
+                name: 'LocalToto',
+                description: 'Ride Payment',
+                order_id: currentOrderId,
+                prefill: {
+                    contact: 'sdfkshf',
+                    email: 'dsfdgdfgc',
+                },
+                theme: { color: '#219653' },
+            };
+
+            const response = await RazorpayCheckout.open(options);
+
+            // STEP 4: Verify Payment (Backend)
+            const vr = await client.post('/payments/verify-razorpay', {
+                bookingId: rideId,
+                paymentId: currentPaymentId,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+            });
+
+            if (vr.data?.success) {
+                Alert.alert('Success', 'Payment completed successfully');
+                // navigate / update status
+            } else {
+                Alert.alert('Payment Failed', vr.data?.message || 'Verification failed');
+            }
+
+        } catch (err: any) {
+            console.log('Razorpay Error:', err);
+            Alert.alert(
+                'Payment Cancelled',
+                err?.description || 'Payment was not completed'
+            );
+        }
+    };
+
+
+
+
+
+
+
 
     // Calculate route using backend API
     const calculateRoute = async () => {
@@ -721,7 +813,12 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                     <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
                         <Text style={styles.cancelButtonText}>Cancel Request</Text>
                     </TouchableOpacity>
+
                 )}
+                <TouchableOpacity style={styles.button} onPress={onPay} activeOpacity={0.8}>
+                    <Text style={styles.text}>Pay Now</Text>
+                </TouchableOpacity>
+
             </View>
         </GestureHandlerRootView>
     );
@@ -1073,6 +1170,20 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
+    },
+    button: {
+        backgroundColor: '#0A8F08',
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 4, // Android shadow
+    },
+    text: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
 });
 
