@@ -27,8 +27,8 @@ const PaymentMethodScreen = ({ navigation }: any) => {
         >
           <Icon name="arrow-left" size={20} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Payment Method</Text>
-      </View>
+        <Text style={styles.headerTitle}> defaut Payment Method</Text>
+      </View> 
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Cash Option */}
