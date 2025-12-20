@@ -10,7 +10,7 @@ import {
     Platform,
     Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Button from '../components/Button';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
@@ -19,6 +19,9 @@ import { loginWithOtp, fetchUserProfile } from '../store/slices/authSlice';
 const { width } = Dimensions.get('window');
 
 const OTPScreen = ({ navigation, route }: any) => {
+    // Safe Area Insets for dynamic positioning
+    const insets = useSafeAreaInsets();
+
     const dispatch = useAppDispatch();
     const { isLoading, error } = useAppSelector((state) => state.auth);
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -142,7 +145,7 @@ const OTPScreen = ({ navigation, route }: any) => {
 
             {/* Back Button */}
             <TouchableOpacity
-                style={styles.backButton}
+                style={[styles.backButton, { top: insets.top + 10 }]}
                 onPress={() => navigation.goBack()}
                 hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
             >
@@ -206,6 +209,7 @@ const OTPScreen = ({ navigation, route }: any) => {
                 <TouchableOpacity
                     style={[
                         styles.verifyButton,
+                        { marginBottom: Math.max(insets.bottom, 20) + 10 },
                         isComplete ? styles.verifyButtonActive : styles.verifyButtonInactive,
                     ]}
                     onPress={handleVerify}

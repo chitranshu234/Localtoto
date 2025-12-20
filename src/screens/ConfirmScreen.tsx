@@ -26,6 +26,7 @@ import Mapbox, { Camera, PointAnnotation, ShapeSource, LineLayer } from '@rnmapb
 import Geolocation from 'react-native-geolocation-service';
 import { BottomSheetModal, BottomSheetModalProvider, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ReanimatedModule, { useSharedValue, useAnimatedStyle, withSpring, interpolate, Extrapolate } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { geocodingService } from '../services/api/geocoding';
@@ -85,6 +86,9 @@ interface LocationSuggestion {
 }
 
 const ConfirmScreen = ({ navigation, route }: any) => {
+    // Safe Area Insets for proper positioning across devices
+    const insets = useSafeAreaInsets();
+
     // Redux
     const dispatch = useAppDispatch();
     const { estimatedFare, estimatedDistance, isCalculatingFare, isBooking } = useAppSelector(state => state.booking);
@@ -711,7 +715,7 @@ const ConfirmScreen = ({ navigation, route }: any) => {
                     placeholderTextColor="#999"
                     value={activeInput === 'pickup' ? pickupQuery : dropQuery}
                     onChangeText={handleSearchTextChange}
-                    autoFocus={true}
+                    autoFocus={false}
                 />
                 {isSearching && <ActivityIndicator size="small" color="#2D7C4F" />}
             </View>
@@ -781,7 +785,7 @@ const ConfirmScreen = ({ navigation, route }: any) => {
     );
 
     const renderVehicleSelection = () => (
-        <View style={styles.compactVehicleCard}>
+        <View style={[styles.compactVehicleCard, { paddingBottom: Math.max(insets.bottom, 20) + 60 }]}>
             {/* Location Summary - Now at TOP */}
             <View style={styles.compactLocationSummary}>
                 <TouchableOpacity
@@ -963,7 +967,7 @@ const ConfirmScreen = ({ navigation, route }: any) => {
                 <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
 
                 {/* Pickup Bar - Fixed at Top */}
-                <View style={styles.topPickupBar}>
+                <View style={[styles.topPickupBar, { top: insets.top + 10 }]}>
                     <TouchableOpacity
                         style={styles.pickupRow}
                         onPress={() => {
