@@ -57,14 +57,14 @@ const ProfileScreen = ({ navigation }: any) => {
             id: '4',
             title: 'Help & Support',
             icon: 'question-circle',
-            action: () => console.log('Help & Support - Screen not yet created')
+            action: () => navigation.navigate('HelpSupport')
         },
-        {
-            id: '5',
-            title: 'Settings',
-            icon: 'cog',
-            action: () => console.log('Settings - Screen not yet created')
-        },
+        // {
+        //     id: '5',
+        //     title: 'Settings',
+        //     icon: 'cog',
+        //     action: () => console.log('Settings - Screen not yet created')
+        // },
     ];
 
     const handleLogout = async () => {

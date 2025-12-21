@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,76 +6,105 @@ import {
   ScrollView,
   StyleSheet,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TripHistoryScreen = ({ navigation }: any) => {
   const [expandedTrip, setExpandedTrip] = useState<number | null>(null);
+  const [trips, setTrips] = useState<any[]>([]);
 
+  // Load trips from storage on component mount
+  useEffect(() => {
+    loadTrips();
+  }, []);
 
-  const trips = [
-    {
-      id: 1,
-      date: 'Today',
-      time: '2:30 PM',
-      pickupLocation: '123 Main Street',
-      dropoffLocation: 'Downtown Center',
-      distance: '4.2 km',
-      duration: '15 mins',
-      amount: '₹245',
-      driverName: 'John Smith',
-      driverRating: 4.8,
-      carType: 'Sedan',
-      status: 'Completed',
-    },
-    {
-      id: 2,
-      date: 'Yesterday',
-      time: '4:15 PM',
-      pickupLocation: 'Airport Terminal 2',
-      dropoffLocation: '456 Park Avenue',
-      distance: '22.5 km',
-      duration: '45 mins',
-      amount: '₹890',
-      driverName: 'Priya Sharma',
-      driverRating: 4.9,
-      carType: 'Premium',
-      status: 'Completed',
-    },
-    {
-      id: 3,
-      date: '2 Days Ago',
-      time: '6:45 PM',
-      pickupLocation: 'Mall Road Junction',
-      dropoffLocation: 'Central Station',
-      distance: '8.7 km',
-      duration: '28 mins',
-      amount: '₹520',
-      driverName: 'Rajesh Kumar',
-      driverRating: 4.7,
-      carType: 'Sedan',
-      status: 'Completed',
-    },
-    {
-      id: 4,
-      date: '1 Week Ago',
-      time: '9:20 AM',
-      pickupLocation: 'Tech Park Building A',
-      dropoffLocation: 'Hospital Road',
-      distance: '15.3 km',
-      duration: '35 mins',
-      amount: '₹680',
-      driverName: 'Amit Patel',
-      driverRating: 4.6,
-      carType: 'SUV',
-      status: 'Completed',
-    },
-  ];
+  // Listen for screen focus (to refresh trips)
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadTrips();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  // Load trips from AsyncStorage
+  const loadTrips = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('trip_history');
+      if (stored) {
+        const savedTrips = JSON.parse(stored);
+        setTrips(savedTrips);
+      }
+    } catch (error) {
+      console.error('Error loading trips:', error);
+    }
+  };
+
+  // Save a new trip to history
+  const saveTripToHistory = async (tripData: any) => {
+    try {
+      const newTrip = {
+        id: Date.now(), // unique ID
+        date: 'Today',
+        time: new Date().toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }),
+        pickupLocation: tripData.pickupLocation || 'Unknown Pickup',
+        dropoffLocation: tripData.dropoffLocation || 'Unknown Destination',
+        distance: tripData.distance ? `${tripData.distance} km` : 'Unknown',
+        duration: tripData.duration ? `${tripData.duration} mins` : 'Unknown',
+        amount: tripData.amount || 'Unknown',
+        driverName: tripData.driverName || 'Driver',
+        driverRating: tripData.driverRating || 4.8,
+        carType: tripData.carType || 'Sedan',
+        status: 'Completed',
+        completedAt: new Date().toISOString(),
+      };
+
+      const updatedTrips = [newTrip, ...trips];
+      setTrips(updatedTrips);
+
+      await AsyncStorage.setItem('trip_history', JSON.stringify(updatedTrips));
+
+      console.log('✅ Trip saved to history:', newTrip);
+      return newTrip;
+    } catch (error) {
+      console.error('Error saving trip:', error);
+      return null;
+    }
+  };
+
+  // Make save function globally available for other screens
+  useEffect(() => {
+    global.saveTripToHistory = saveTripToHistory;
+  }, [trips]);
 
   const toggleTrip = (tripId: number) => {
     setExpandedTrip(expandedTrip === tripId ? null : tripId);
   };
+
+  // Test function to add a sample trip
+  // const saveTestTrip = async () => {
+  //   // const testTrip = {
+  //   //   pickupLocation: 'Patna Junction',
+  //   //   dropoffLocation: 'Danapur Railway Station',
+  //   //   distance: 12.5,
+  //   //   duration: 25,
+  //   //   amount: '₹350',
+  //   //   driverName: 'Test Driver',
+  //   //   driverRating: 4.7,
+  //   //   carType: 'Auto Rickshaw',
+  //   // };
+
+  //   const saved = await saveTripToHistory(testTrip);
+  //   if (saved) {
+  //     Alert.alert('Success', 'Test trip added to history!');
+  //   }
+  // };
 
   return (
     <View style={styles.container}>
@@ -99,7 +128,8 @@ const TripHistoryScreen = ({ navigation }: any) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 80 }}
       >
-        {trips.map((trip) => (
+        {trips.length > 0 ? (
+          trips.map((trip) => (
           <TouchableOpacity
             key={trip.id}
             onPress={() => toggleTrip(trip.id)}
@@ -184,8 +214,17 @@ const TripHistoryScreen = ({ navigation }: any) => {
               )}
             </View>
           </TouchableOpacity>
-        ))}
+        ))
+        ) : (
+          // Empty state
+          <View style={styles.emptyContainer}>
+            <Icon name="history" size={60} color="#ccc" />
+            <Text style={styles.emptyTitle}>No trips yet</Text>
+            <Text style={styles.emptySubtitle}>Your completed trips will appear here</Text>
+          </View>
+        )}
 
+  
         {/* Load More Button */}
         <TouchableOpacity style={styles.loadMoreBtn}>
           <Text style={styles.loadMoreText}>Load More Trips</Text>
@@ -442,6 +481,25 @@ const styles = StyleSheet.create({
     color: '#1a7f4a',
     fontWeight: '600',
     fontSize: 14,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#666',
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    paddingHorizontal: 40,
   },
 });
 
