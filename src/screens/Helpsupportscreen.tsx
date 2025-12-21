@@ -12,8 +12,10 @@ import {
   Platform,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useNavigation } from '@react-navigation/native';
 
 const HelpSupportScreen = () => {
+  const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState('');
   const [problemDescription, setProblemDescription] = useState('');
@@ -59,7 +61,12 @@ const HelpSupportScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Help & Support</Text>
+        <View style={styles.headerTop}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Help & Support</Text>
+        </View>
         <Text style={styles.subtitle}>We're here to help you 24/7</Text>
       </View>
 
@@ -226,11 +233,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 4,
+    flex: 1,
   },
   subtitle: {
     fontSize: 16,
