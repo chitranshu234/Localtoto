@@ -22,6 +22,7 @@ import { geocodingService } from '../services/api/geocoding';
 import RazorpayCheckout from 'react-native-razorpay';
 import client from '@services/api/client';
 import { getRazorpayKey } from '@services/razorpay';
+import TripDataManager from '../utils/TripDataManager';
 
 
 const { width, height } = Dimensions.get('window');
@@ -191,6 +192,39 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
 
             if (vr.data?.success) {
                 Alert.alert('Success', 'Payment completed successfully');
+
+                // STEP 5: Set trip data and save to history after successful payment
+                const tripDataManager = TripDataManager;
+
+                // Calculate approximate distance and duration if not available
+                const distance = routeParams.distance || 5; // fallback distance
+                const duration = routeParams.duration || 15; // fallback duration
+
+                // Set current trip data with all available information
+                tripDataManager.setCurrentTrip({
+                    rideId: rideId,
+                    pickupLocation: pickup.address,
+                    dropoffLocation: dropoff.address,
+                    pickupCoords: { lat: pickup.latitude, lng: pickup.longitude },
+                    dropoffCoords: { lat: dropoff.latitude, lng: dropoff.longitude },
+                    distance: distance,
+                    duration: duration,
+                    amount: `₹${fare}`,
+                    driverName: currentDriver?.name || 'Driver',
+                    driverRating: currentDriver?.rating || 4.8,
+                    carType: currentDriver?.vehicleType || RIDE_TYPE_NAMES[rideType],
+                    paymentMethod: 'UPI',
+                    rideType: rideType,
+                });
+
+                // Complete trip and save to history
+                const success = await tripDataManager.completeTrip();
+                if (success) {
+                    console.log('✅ Trip saved to history after payment');
+                } else {
+                    console.log('❌ Failed to save trip to history');
+                }
+
                 // navigate / update status
             } else {
                 Alert.alert('Payment Failed', vr.data?.message || 'Verification failed');
@@ -211,6 +245,44 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
 
 
 
+
+  // Function to save trip to history (for any payment method)
+    const saveTripToHistory = async (paymentMethod: string = 'Cash') => {
+        try {
+            const tripDataManager = TripDataManager;
+
+            // Calculate approximate distance and duration if not available
+            const distance = routeParams.distance || 5; // fallback distance
+            const duration = routeParams.duration || 15; // fallback duration
+
+            // Set current trip data with all available information
+            tripDataManager.setCurrentTrip({
+                rideId: rideId,
+                pickupLocation: pickup.address,
+                dropoffLocation: dropoff.address,
+                pickupCoords: { lat: pickup.latitude, lng: pickup.longitude },
+                dropoffCoords: { lat: dropoff.latitude, lng: dropoff.longitude },
+                distance: distance,
+                duration: duration,
+                amount: `₹${fare}`,
+                driverName: currentDriver?.name || 'Driver',
+                driverRating: currentDriver?.rating || 4.8,
+                carType: currentDriver?.vehicleType || RIDE_TYPE_NAMES[rideType],
+                paymentMethod: paymentMethod,
+                rideType: rideType,
+            });
+
+            // Complete trip and save to history
+            const success = await tripDataManager.completeTrip();
+            if (success) {
+                console.log(`✅ Trip saved to history after ${paymentMethod} payment`);
+            } else {
+                console.log(`❌ Failed to save trip to history`);
+            }
+        } catch (error) {
+            console.error('Error saving trip to history:', error);
+        }
+    };
 
     // Calculate route using backend API
     const calculateRoute = async () => {
@@ -516,6 +588,9 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
     // Navigate to Rating when ride is complete
     useEffect(() => {
         if (ridePhase === 'arrived') {
+            // Save trip to history for cash payments when ride is completed
+            saveTripToHistory('Cash');
+
             const timeout = setTimeout(() => {
                 navigation.navigate('RatingTabs', {
                     driver: apiDriver || selectedDriver,

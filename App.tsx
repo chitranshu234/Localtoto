@@ -5,6 +5,7 @@
  * @format
  */
 
+import React, { useEffect } from 'react';
 import { NewAppScreen } from '@react-native/new-app-screen';
 import { StatusBar, StyleSheet, useColorScheme, View, LogBox } from 'react-native';
 import {
@@ -19,6 +20,7 @@ import { store, persistor } from './src/store';
 
 import AppNavigator from './src/navigation/AppNavigator';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import TripDataManager from './src/utils/TripDataManager';
 
 // Ignore third-party library deprecation warnings
 LogBox.ignoreLogs([
@@ -26,6 +28,11 @@ LogBox.ignoreLogs([
 ]);
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
+
+  // Initialize TripDataManager on app start
+  useEffect(() => {
+    TripDataManager.loadPersistedTrip();
+  }, []);
   const html = `
   <html>
     <head>
