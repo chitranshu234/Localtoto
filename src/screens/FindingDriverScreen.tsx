@@ -899,7 +899,7 @@ const styles = StyleSheet.create({
     },
     rideInfo: {
         marginBottom: 15,
-    },
+    }, 
     vehicleRow: {
         flexDirection: 'row',
         alignItems: 'center',
