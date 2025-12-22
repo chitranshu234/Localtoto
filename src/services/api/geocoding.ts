@@ -1,4 +1,4 @@
-import client from './client';
+import client, { publicClient } from './client';
 
 // Types
 interface GeocodeResult {
@@ -196,7 +196,7 @@ export const geocodingService = {
         try {
             console.log('Getting route from backend...');
 
-            const response = await client.post('/bookings/route', {
+            const response = await publicClient.post('/bookings/route', {
                 pickup: {
                     coords: {
                         lat: parseFloat(String(pickupCoords.lat)),

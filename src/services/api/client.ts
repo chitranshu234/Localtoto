@@ -73,9 +73,11 @@ client.interceptors.response.use(
                 console.log('🔄 Refresh token:', refreshToken ? 'Present' : 'MISSING');
 
                 if (!refreshToken) {
-                    // No refresh token - but don't auto logout, let UI handle it
-                    console.log('❌ No refresh token available - cannot refresh');
-                    return Promise.reject(error);
+                    // No refresh token - clear expired tokens and retry without auth
+                    console.log('❌ No refresh token available - clearing expired tokens and retrying without auth');
+                    await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
+                    delete originalRequest.headers.Authorization;
+                    return client(originalRequest);
                 }
 
                 // Call refresh endpoint directly to avoid interceptor loop
@@ -100,20 +102,32 @@ client.interceptors.response.use(
                     originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
                     return client(originalRequest);
                 } else {
-                    console.log('❌ No token in refresh response');
-                    return Promise.reject(error);
+                    console.log('❌ No token in refresh response - clearing tokens and retrying without auth');
+                    await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
+                    delete originalRequest.headers.Authorization;
+                    return client(originalRequest);
                 }
             } catch (refreshError: any) {
-                // Refresh failed - log but don't auto logout
+                // Refresh failed - clear expired tokens and retry without auth
                 console.log('❌ Token refresh failed:', refreshError.response?.status, refreshError.response?.data);
-                // Don't call handleLogout() here - let the app handle auth state
-                return Promise.reject(refreshError);
+                console.log('🔄 Clearing expired tokens and retrying without auth');
+                await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
+                delete originalRequest.headers.Authorization;
+                return client(originalRequest);
             }
         }
 
         return Promise.reject(error);
     }
 );
+
+// Create a public client for APIs that don't require authentication
+export const publicClient = axios.create({
+    baseURL: BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
 
 const handleLogout = async () => {
     await AsyncStorage.multiRemove(['access_token', 'refresh_token', 'user_profile']);
