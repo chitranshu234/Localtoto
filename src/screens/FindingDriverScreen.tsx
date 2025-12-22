@@ -9,6 +9,7 @@ import {
     Dimensions,
     Alert,
     Easing,
+    Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -629,6 +630,41 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
         );
     };
 
+    // Handle phone call to driver
+    const handleCallDriver = () => {
+        const phoneNumber = currentDriver?.phone || currentDriver?.phoneNumber;
+
+        if (!phoneNumber) {
+            Alert.alert(
+                'Contact Not Available',
+                "Driver's phone number is not available at the moment.",
+                [{ text: 'OK' }]
+            );
+            return;
+        }
+
+        Alert.alert(
+            'Call Driver',
+            `Do you want to call ${currentDriver.name} at ${phoneNumber}?`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Call',
+                    onPress: () => {
+                        const phoneUrl = `tel:${phoneNumber}`;
+                        Linking.openURL(phoneUrl).catch(() => {
+                            Alert.alert(
+                                'Unable to Call',
+                                'Could not open the phone dialer. Please make sure your device supports phone calls.',
+                                [{ text: 'OK' }]
+                            );
+                        });
+                    }
+                }
+            ]
+        );
+    };
+
 
     // Zoom controls
     const handleZoomIn = () => {
@@ -860,7 +896,7 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                                 </Text>
                             </View>
                             <View style={styles.driverActions}>
-                                <TouchableOpacity style={styles.actionBtn}>
+                                <TouchableOpacity style={styles.actionBtn} onPress={handleCallDriver}>
                                     <Ionicons name="call" size={18} color="#219653" />
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.actionBtn}>
