@@ -71,6 +71,7 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
     // Redux
     const dispatch = useAppDispatch();
     const { driver: apiDriver, driverLocation: apiDriverLocation, rideStatus, isDriverNear, hasDriverArrived } = useAppSelector(state => state.ride);
+    const { user } = useAppSelector(state => state.auth);
 
     // State
     const [routeCoordinates, setRouteCoordinates] = useState<any[]>([]);
@@ -174,8 +175,8 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                 description: 'Ride Payment',
                 order_id: currentOrderId,
                 prefill: {
-                    contact: 'sdfkshf',
-                    email: 'dsfdgdfgc',
+                    contact: user?.phoneNumber || '',
+                    email: user?.email || '',
                 },
                 theme: { color: '#219653' },
             };
