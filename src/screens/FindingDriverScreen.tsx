@@ -900,9 +900,9 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                                 <TouchableOpacity style={styles.actionBtn} onPress={handleCallDriver}>
                                     <Ionicons name="call" size={18} color="#219653" />
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.actionBtn}>
+                                {/* <TouchableOpacity style={styles.actionBtn}>
                                     <Ionicons name="chatbubble" size={18} color="#219653" />
-                                </TouchableOpacity>
+                                </TouchableOpacity> */}
                             </View>
                         </View>
                     </View>
@@ -917,7 +917,7 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                 {ridePhase === 'arrived' ? (
                     <TouchableOpacity
                         style={[styles.cancelButton, { backgroundColor: '#219653', borderColor: '#219653' }]}
-                        onPress={() => navigation.navigate('RatingTabs', { rideId })}
+                        onPress={() => navigation.navigate('Rating', { rideId })}
                     >
                         <Text style={[styles.cancelButtonText, { color: '#fff' }]}>Rate Your Ride</Text>
                     </TouchableOpacity>

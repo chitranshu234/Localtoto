@@ -12,12 +12,14 @@ import {
     Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Button from '../components/Button';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { rateDriver } from '../store/slices/rideSlice';
 
 const { width, height } = Dimensions.get('window');
 
@@ -26,13 +28,20 @@ type RootStackParamList = {
     Location: undefined;
     DriverFound: undefined;
     RideStatus: undefined;
-    Rating: undefined;
+    Rating: { rideId?: number } | undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Rating'>;
+type RoutePropType = RouteProp<RootStackParamList, 'Rating'>;
 
 const RatingScreen = () => {
     const navigation = useNavigation<NavigationProp>();
+    const route = useRoute<RoutePropType>();
+    const dispatch = useAppDispatch();
+    const { isRating } = useAppSelector(state => state.ride);
+
+    // Get rideId from route params
+    const rideId = route.params?.rideId;
     const [rating, setRating] = useState(0);
     const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
     const [comment, setComment] = useState('');
@@ -76,19 +85,56 @@ const RatingScreen = () => {
         );
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (rating === 0) {
             Alert.alert('Rating Required', 'Please select a star rating before submitting');
             return;
         }
 
-        Alert.alert(
-            'Thank You!',
-            'Your feedback helps us improve our service',
-            [
-                { text: 'OK', onPress: () => navigation.goBack() }
-            ]
-        );
+        // Validate rideId exists
+        if (!rideId) {
+            Alert.alert('Error', 'Unable to submit rating: Ride information not found');
+            return;
+        }
+
+        try {
+            // Prepare feedback text from selected issues/compliments
+            const feedbackItems = selectedIssues.length > 0 ? selectedIssues.join(', ') : '';
+            const fullComment = comment ?
+                (feedbackItems ? `${feedbackItems}: ${comment}` : comment) :
+                feedbackItems;
+
+            // Dispatch the rating action
+            const result = await dispatch(rateDriver({
+                bookingId: rideId,
+                rating: rating,
+                comment: fullComment || undefined,
+            })).unwrap();
+
+            if (result.success) {
+                Alert.alert(
+                    'Thank You!',
+                    'Your feedback helps us improve our service',
+                    [
+                        {
+                            text: 'OK',
+                            onPress: () => {
+                                // Navigate back and clear ride state
+                                navigation.goBack();
+                            }
+                        }
+                    ]
+                );
+            } else {
+                Alert.alert('Error', result.message || 'Failed to submit rating');
+            }
+        } catch (error: any) {
+            console.error('Rating submission error:', error);
+            Alert.alert(
+                'Error',
+                error.message || 'Failed to submit rating. Please try again.'
+            );
+        }
     };
 
     const handleBookAnother = () => {
@@ -240,7 +286,7 @@ const RatingScreen = () => {
 
                         <View style={styles.divider} />
 
-                        <View style={styles.tipSection}>
+                        {/* <View style={styles.tipSection}>
                             <Text style={styles.sectionTitle}>Add a tip for your driver</Text>
                             <View style={styles.tipOptions}>
                                 {tipOptions.map((option) => (
@@ -262,9 +308,9 @@ const RatingScreen = () => {
                                     </TouchableOpacity>
                                 ))}
                             </View>
-                        </View>
+                        </View> */}
 
-                        <View style={styles.summarySection}>
+                        {/* <View style={styles.summarySection}>
                             <View style={styles.summaryRow}>
                                 <Text style={styles.summaryLabel}>Trip Fare</Text>
                                 <Text style={styles.summaryValue}>₹45.00</Text>
@@ -279,18 +325,20 @@ const RatingScreen = () => {
                                 <Text style={styles.totalLabel}>Total Paid</Text>
                                 <Text style={styles.totalValue}>₹{45 + (tip || 0)}.00</Text>
                             </View>
-                        </View>
+                        </View> */}
 
                         <View style={styles.buttonContainer}>
                             <Button
-                                title="Submit Feedback"
+                                title={isRating ? "Submitting..." : "Submit Feedback"}
                                 onPress={handleSubmit}
                                 variant="primary"
                                 style={styles.submitButton}
+                                disabled={isRating}
                             />
                             <TouchableOpacity
                                 style={styles.bookButton}
                                 onPress={handleBookAnother}
+                                disabled={isRating}
                             >
                                 <Text style={styles.bookButtonText}>Book Another Ride</Text>
                             </TouchableOpacity>
