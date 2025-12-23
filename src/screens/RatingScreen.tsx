@@ -12,12 +12,14 @@ import {
     Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Button from '../components/Button';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { rateDriver } from '../store/slices/rideSlice';
 
 const { width, height } = Dimensions.get('window');
 
@@ -26,17 +28,34 @@ type RootStackParamList = {
     Location: undefined;
     DriverFound: undefined;
     RideStatus: undefined;
-    Rating: undefined;
+    Rating: { rideId?: number } | undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Rating'>;
+type RoutePropType = RouteProp<RootStackParamList, 'Rating'>;
 
 const RatingScreen = () => {
     const navigation = useNavigation<NavigationProp>();
+    const route = useRoute<RoutePropType>();
+    const dispatch = useAppDispatch();
+    const { isRating, driver, currentRide } = useAppSelector(state => state.ride);
+
+    // Get rideId from route params
+    const rideId = route.params?.rideId;
     const [rating, setRating] = useState(0);
     const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
     const [comment, setComment] = useState('');
     const [tip, setTip] = useState<number | null>(null);
+
+    // Generate avatar initials from driver name
+    const getAvatarInitials = (name?: string) => {
+        if (!name) return 'DR';
+        const parts = name.split(' ');
+        if (parts.length >= 2) {
+            return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
+    };
 
     const commonIssues = [
         { id: 'route', icon: 'wrong-location', iconSet: 'MaterialCommunityIcons', label: 'Wrong route' },
@@ -76,19 +95,56 @@ const RatingScreen = () => {
         );
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (rating === 0) {
             Alert.alert('Rating Required', 'Please select a star rating before submitting');
             return;
         }
 
-        Alert.alert(
-            'Thank You!',
-            'Your feedback helps us improve our service',
-            [
-                { text: 'OK', onPress: () => navigation.goBack() }
-            ]
-        );
+        // Validate rideId exists
+        if (!rideId) {
+            Alert.alert('Error', 'Unable to submit rating: Ride information not found');
+            return;
+        }
+
+        try {
+            // Prepare feedback text from selected issues/compliments
+            const feedbackItems = selectedIssues.length > 0 ? selectedIssues.join(', ') : '';
+            const fullComment = comment ?
+                (feedbackItems ? `${feedbackItems}: ${comment}` : comment) :
+                feedbackItems;
+
+            // Dispatch the rating action
+            const result = await dispatch(rateDriver({
+                bookingId: rideId,
+                rating: rating,
+                comment: fullComment || undefined,
+            })).unwrap();
+
+            if (result.success) {
+                Alert.alert(
+                    'Thank You!',
+                    'Your feedback helps us improve our service',
+                    [
+                        {
+                            text: 'OK',
+                            onPress: () => {
+                                // Navigate back and clear ride state
+                                navigation.goBack();
+                            }
+                        }
+                    ]
+                );
+            } else {
+                Alert.alert('Error', result.message || 'Failed to submit rating');
+            }
+        } catch (error: any) {
+            console.error('Rating submission error:', error);
+            Alert.alert(
+                'Error',
+                error.message || 'Failed to submit rating. Please try again.'
+            );
+        }
     };
 
     const handleBookAnother = () => {
@@ -177,12 +233,12 @@ const RatingScreen = () => {
                         <View style={styles.driverCard}>
                             <View style={styles.driverProfile}>
                                 <View style={styles.driverAvatar}>
-                                    <Text style={styles.avatarText}>RS</Text>
+                                    <Text style={styles.avatarText}>{getAvatarInitials(driver?.name)}</Text>
                                 </View>
                                 <View style={styles.driverDetails}>
-                                    <Text style={styles.driverName}>Ramesh Sharma</Text>
-                                    <Text style={styles.driverInfo}>Honda Activa • DL-01-AB-1234</Text>
-                                    <Text style={styles.tripInfo}>15 Oct, 3:30 PM • ₹45 paid</Text>
+                                    <Text style={styles.driverName}>{driver?.name || 'Driver'}</Text>
+                                    <Text style={styles.driverInfo}>{driver?.vehicle || 'Vehicle'}{driver?.vehicleNumber ? ` • ${driver.vehicleNumber}` : ''}</Text>
+                                    <Text style={styles.tripInfo}>{currentRide ? `₹${currentRide.fare} paid` : 'Fare not available'}</Text>
                                 </View>
                             </View>
                         </View>
@@ -240,7 +296,7 @@ const RatingScreen = () => {
 
                         <View style={styles.divider} />
 
-                        <View style={styles.tipSection}>
+                        {/* <View style={styles.tipSection}>
                             <Text style={styles.sectionTitle}>Add a tip for your driver</Text>
                             <View style={styles.tipOptions}>
                                 {tipOptions.map((option) => (
@@ -262,9 +318,9 @@ const RatingScreen = () => {
                                     </TouchableOpacity>
                                 ))}
                             </View>
-                        </View>
+                        </View> */}
 
-                        <View style={styles.summarySection}>
+                        {/* <View style={styles.summarySection}>
                             <View style={styles.summaryRow}>
                                 <Text style={styles.summaryLabel}>Trip Fare</Text>
                                 <Text style={styles.summaryValue}>₹45.00</Text>
@@ -279,18 +335,20 @@ const RatingScreen = () => {
                                 <Text style={styles.totalLabel}>Total Paid</Text>
                                 <Text style={styles.totalValue}>₹{45 + (tip || 0)}.00</Text>
                             </View>
-                        </View>
+                        </View> */}
 
                         <View style={styles.buttonContainer}>
                             <Button
-                                title="Submit Feedback"
+                                title={isRating ? "Submitting..." : "Submit Feedback"}
                                 onPress={handleSubmit}
                                 variant="primary"
                                 style={styles.submitButton}
+                                disabled={isRating}
                             />
                             <TouchableOpacity
                                 style={styles.bookButton}
                                 onPress={handleBookAnother}
+                                disabled={isRating}
                             >
                                 <Text style={styles.bookButtonText}>Book Another Ride</Text>
                             </TouchableOpacity>

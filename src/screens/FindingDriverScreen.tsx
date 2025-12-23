@@ -9,6 +9,7 @@ import {
     Dimensions,
     Alert,
     Easing,
+    Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -19,6 +20,11 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { getRideDetails, cancelRide, clearRide } from '../store/slices/rideSlice';
 import { geocodingService } from '../services/api/geocoding';
+import RazorpayCheckout from 'react-native-razorpay';
+import client from '@services/api/client';
+import { getRazorpayKey } from '@services/razorpay';
+import TripDataManager from '../utils/TripDataManager';
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -65,6 +71,7 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
     // Redux
     const dispatch = useAppDispatch();
     const { driver: apiDriver, driverLocation: apiDriverLocation, rideStatus, isDriverNear, hasDriverArrived } = useAppSelector(state => state.ride);
+    const { user } = useAppSelector(state => state.auth);
 
     // State
     const [routeCoordinates, setRouteCoordinates] = useState<any[]>([]);
@@ -73,6 +80,8 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
     const [driverArrived, setDriverArrived] = useState(false);
     const [movingDriverCoords, setMovingDriverCoords] = useState<[number, number] | null>(null);
     const [searchingText, setSearchingText] = useState('Finding your driver...');
+    const [orderid, setOrderId] = useState('');
+    const [paymentid, setPaymentId] = useState('');
 
     // Ride phase state: searching → driver_found → arriving → in_progress → arrived
     const [ridePhase, setRidePhase] = useState<'searching' | 'driver_found' | 'arriving' | 'in_progress' | 'arrived'>('searching');
@@ -118,6 +127,163 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
             });
         }
         return drivers;
+    };
+
+
+    const onPay = async () => {
+        try {
+            let currentPaymentId = '';
+            let currentOrderId = '';
+
+            // STEP 1: Create Order (Same backend)
+            if (!currentPaymentId) {
+                const or = await client.post('/payments/create-order', {
+                    bookingId: rideId,
+                    amount: fare
+                });
+
+                if (!or.data?.success) {
+                    Alert.alert('Payment Error', or.data?.message || 'Order creation failed');
+                    return;
+                }
+
+                currentOrderId = or.data.orderId;
+                currentPaymentId = or.data.paymentId;
+
+                setOrderId(currentOrderId);
+                setPaymentId(currentPaymentId);
+            }
+
+            if (!currentOrderId) {
+                Alert.alert('Payment Error', 'Order ID missing');
+                return;
+            }
+
+            // STEP 2: Get Razorpay Key
+            const razorpayKey = await getRazorpayKey();
+            if (!razorpayKey) {
+                Alert.alert('Payment Error', 'Payment gateway unavailable');
+                return;
+            }
+
+            // STEP 3: Open Razorpay Checkout
+            const options = {
+                key: razorpayKey,
+                amount: Math.round(Number(fare) * 100),
+                currency: 'INR',
+                name: 'LocalToto',
+                description: 'Ride Payment',
+                order_id: currentOrderId,
+                prefill: {
+                    contact: user?.phoneNumber || '',
+                    email: user?.email || '',
+                },
+                theme: { color: '#219653' },
+            };
+
+            const response = await RazorpayCheckout.open(options);
+
+            // STEP 4: Verify Payment (Backend)
+            const vr = await client.post('/payments/verify-razorpay', {
+                bookingId: rideId,
+                paymentId: currentPaymentId,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+            });
+
+            if (vr.data?.success) {
+                Alert.alert('Success', 'Payment completed successfully');
+
+                // STEP 5: Set trip data and save to history after successful payment
+                const tripDataManager = TripDataManager;
+
+                // Calculate approximate distance and duration if not available
+                const distance = routeParams.distance || 5; // fallback distance
+                const duration = routeParams.duration || 15; // fallback duration
+
+                // Set current trip data with all available information
+                tripDataManager.setCurrentTrip({
+                    rideId: rideId,
+                    pickupLocation: pickup.address,
+                    dropoffLocation: dropoff.address,
+                    pickupCoords: { lat: pickup.latitude, lng: pickup.longitude },
+                    dropoffCoords: { lat: dropoff.latitude, lng: dropoff.longitude },
+                    distance: distance,
+                    duration: duration,
+                    amount: `₹${fare}`,
+                    driverName: currentDriver?.name || 'Driver',
+                    driverRating: currentDriver?.rating || 4.8,
+                    carType: currentDriver?.vehicleType || RIDE_TYPE_NAMES[rideType],
+                    paymentMethod: 'UPI',
+                    rideType: rideType,
+                });
+
+                // Complete trip and save to history
+                const success = await tripDataManager.completeTrip();
+                if (success) {
+                    console.log('✅ Trip saved to history after payment');
+                } else {
+                    console.log('❌ Failed to save trip to history');
+                }
+
+                // navigate / update status
+            } else {
+                Alert.alert('Payment Failed', vr.data?.message || 'Verification failed');
+            }
+
+        } catch (err: any) {
+            console.log('Razorpay Error:', err);
+            Alert.alert(
+                'Payment Cancelled',
+                err?.description || 'Payment was not completed'
+            );
+        }
+    };
+
+
+
+
+
+
+
+
+  // Function to save trip to history (for any payment method)
+    const saveTripToHistory = async (paymentMethod: string = 'Cash') => {
+        try {
+            const tripDataManager = TripDataManager;
+
+            // Calculate approximate distance and duration if not available
+            const distance = routeParams.distance || 5; // fallback distance
+            const duration = routeParams.duration || 15; // fallback duration
+
+            // Set current trip data with all available information
+            tripDataManager.setCurrentTrip({
+                rideId: rideId,
+                pickupLocation: pickup.address,
+                dropoffLocation: dropoff.address,
+                pickupCoords: { lat: pickup.latitude, lng: pickup.longitude },
+                dropoffCoords: { lat: dropoff.latitude, lng: dropoff.longitude },
+                distance: distance,
+                duration: duration,
+                amount: `₹${fare}`,
+                driverName: currentDriver?.name || 'Driver',
+                driverRating: currentDriver?.rating || 4.8,
+                carType: currentDriver?.vehicleType || RIDE_TYPE_NAMES[rideType],
+                paymentMethod: paymentMethod,
+                rideType: rideType,
+            });
+
+            // Complete trip and save to history
+            const success = await tripDataManager.completeTrip();
+            if (success) {
+                console.log(`✅ Trip saved to history after ${paymentMethod} payment`);
+            } else {
+                console.log(`❌ Failed to save trip to history`);
+            }
+        } catch (error) {
+            console.error('Error saving trip to history:', error);
+        }
     };
 
     // Calculate route using backend API
@@ -424,6 +590,9 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
     // Navigate to Rating when ride is complete
     useEffect(() => {
         if (ridePhase === 'arrived') {
+            // Save trip to history for cash payments when ride is completed
+            saveTripToHistory('Cash');
+
             const timeout = setTimeout(() => {
                 navigation.navigate('RatingTabs', {
                     driver: apiDriver || selectedDriver,
@@ -458,6 +627,41 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                     style: 'destructive',
                     onPress: () => navigation.goBack()
                 },
+            ]
+        );
+    };
+
+    // Handle phone call to driver
+    const handleCallDriver = () => {
+        const phoneNumber = currentDriver?.phone || currentDriver?.phoneNumber;
+
+        if (!phoneNumber) {
+            Alert.alert(
+                'Contact Not Available',
+                "Driver's phone number is not available at the moment.",
+                [{ text: 'OK' }]
+            );
+            return;
+        }
+
+        Alert.alert(
+            'Call Driver',
+            `Do you want to call ${currentDriver.name} at ${phoneNumber}?`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Call',
+                    onPress: () => {
+                        const phoneUrl = `tel:${phoneNumber}`;
+                        Linking.openURL(phoneUrl).catch(() => {
+                            Alert.alert(
+                                'Unable to Call',
+                                'Could not open the phone dialer. Please make sure your device supports phone calls.',
+                                [{ text: 'OK' }]
+                            );
+                        });
+                    }
+                }
             ]
         );
     };
@@ -693,12 +897,12 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                                 </Text>
                             </View>
                             <View style={styles.driverActions}>
-                                <TouchableOpacity style={styles.actionBtn}>
+                                <TouchableOpacity style={styles.actionBtn} onPress={handleCallDriver}>
                                     <Ionicons name="call" size={18} color="#219653" />
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.actionBtn}>
+                                {/* <TouchableOpacity style={styles.actionBtn}>
                                     <Ionicons name="chatbubble" size={18} color="#219653" />
-                                </TouchableOpacity>
+                                </TouchableOpacity> */}
                             </View>
                         </View>
                     </View>
@@ -713,7 +917,7 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                 {ridePhase === 'arrived' ? (
                     <TouchableOpacity
                         style={[styles.cancelButton, { backgroundColor: '#219653', borderColor: '#219653' }]}
-                        onPress={() => navigation.navigate('RatingTabs', { rideId })}
+                        onPress={() => navigation.navigate('Rating', { rideId })}
                     >
                         <Text style={[styles.cancelButtonText, { color: '#fff' }]}>Rate Your Ride</Text>
                     </TouchableOpacity>
@@ -721,7 +925,44 @@ const FindingDriverScreen = ({ navigation, route }: any) => {
                     <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
                         <Text style={styles.cancelButtonText}>Cancel Request</Text>
                     </TouchableOpacity>
+
                 )}
+               Payment Row */
+            /* <View style={styles.compactPaymentRow}>
+                <Text style={styles.compactPaymentLabel}>Pay by</Text>
+                <View style={styles.compactPaymentOptions}>
+                 <TouchableOpacity
+  style={[styles.compactPaymentBtn, styles.compactPaymentBtnActive]}
+  onPress={() =>
+    Alert.alert(
+      'Confirm Payment Method',
+      'You have selected Cash as your payment method. Do you want to continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Confirm',
+          onPress: () => console.log('Cash payment confirmed'),
+        },
+      ],
+      { cancelable: true }
+    )
+  }
+>
+  <Text style={[styles.compactPaymentText, styles.compactPaymentTextActive]}>
+    Cash
+  </Text>
+</TouchableOpacity>
+
+
+                    <TouchableOpacity
+                        style={[styles.compactPaymentBtn, styles.compactPaymentBtnActive]}
+                       onPress={onPay}
+                    >
+                        <Text style={[styles.compactPaymentText, styles.compactPaymentTextActive]}>UPI</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+
             </View>
         </GestureHandlerRootView>
     );
@@ -1073,6 +1314,67 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
+    },
+    button: {
+        backgroundColor: '#0A8F08',
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 4, // Android shadow
+    },
+    text: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: '700',
+        letterSpacing: 0.5,
+    },
+      compactPaymentRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+        marginTop: 18,
+    },
+    compactPaymentLabel: {
+        fontSize: 20,
+        color: '#555',
+        fontWeight: '600',
+    },
+    compactPaymentOptions: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    compactPaymentBtn: {
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 18,
+        backgroundColor: '#f5f5f5',
+    },
+    compactPaymentBtnActive: {
+        backgroundColor: '#219653',
+    },
+    compactPaymentText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#666',
+    },
+    compactPaymentTextActive: {
+        color: '#fff',
+    },
+    compactConfirmButton: {
+        backgroundColor: '#219653',
+        borderRadius: 12,
+        paddingVertical: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 4,
+    },
+    compactConfirmText: {
+        color: '#fff',
+        fontSize: 17,
+        fontWeight: '700',
     },
 });
 

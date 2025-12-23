@@ -10,6 +10,7 @@ interface Location {
 interface Driver {
     id: number;
     name: string;
+    phone?: string;
     phoneNumber?: string;
     vehicle: string;
     vehicleNumber?: string;

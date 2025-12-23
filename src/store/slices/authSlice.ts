@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../../services/api/auth';
 import { User, AuthResponse } from '../../types/api';
+import { getRazorpayKey } from '../../services/razorpay';
 
 interface AuthState {
     user: User | null;
@@ -35,6 +36,14 @@ export const loginWithOtp = createAsyncThunk(
             // Store tokens in AsyncStorage for API client interceptor
             await AsyncStorage.setItem('access_token', response.token);
             await AsyncStorage.setItem('refresh_token', response.refreshToken);
+
+            // Pre-fetch Razorpay key for seamless payment experience
+            try {
+                await getRazorpayKey();
+            } catch (error) {
+                console.warn('Failed to prefetch Razorpay key:', error);
+                // Don't fail login if Razorpay key fetch fails
+            }
 
             return response;
         } catch (error: any) {

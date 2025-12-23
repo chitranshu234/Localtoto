@@ -41,30 +41,30 @@ const ProfileScreen = ({ navigation }: any) => {
             icon: 'car',
             action: () => navigation.navigate('Activity')
         },
-        {
-            id: '2',
-            title: 'Saved Locations',
-            icon: 'map-marker',
-            action: () => console.log('Saved Locations - Screen not yet created')
-        },
-        {
-            id: '3',
-            title: 'Payment Methods',
-            icon: 'credit-card',
-            action: () => navigation.navigate('Payment')
-        },
+        // {
+        //     id: '2',
+        //     title: 'Saved Locations',
+        //     icon: 'map-marker',
+        //     action: () => console.log('Saved Locations - Screen not yet created')
+        // },
+        // {
+        //     id: '3',
+        //     title: 'Payment Methods',
+        //     icon: 'credit-card',
+        //     action: () => navigation.navigate('Payment')
+        // },
         {
             id: '4',
             title: 'Help & Support',
             icon: 'question-circle',
-            action: () => console.log('Help & Support - Screen not yet created')
+            action: () => navigation.navigate('HelpSupport')
         },
-        {
-            id: '5',
-            title: 'Settings',
-            icon: 'cog',
-            action: () => console.log('Settings - Screen not yet created')
-        },
+        // {
+        //     id: '5',
+        //     title: 'Settings',
+        //     icon: 'cog',
+        //     action: () => console.log('Settings - Screen not yet created')
+        // },
     ];
 
     const handleLogout = async () => {

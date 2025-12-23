@@ -22,6 +22,7 @@ import ConfirmScreen from '../screens/ConfirmScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import FindingDriverScreen from '../screens/FindingDriverScreen';
 import DriverFoundScreen from '../screens/DriverFoundScreen';
+import Helpsupportscreen from '../screens/Helpsupportscreen';
 
 // Navigation refs
 export const navigationRef = React.createRef<NavigationContainerRef<any>>();
@@ -166,6 +167,7 @@ const MainNavigator = () => {
             {/* Ride Flow - Stack screens without tabs */}
             <AppStack.Screen name="RideStatus" component={RideStatusScreen} />
             <AppStack.Screen name="Rating" component={RatingScreen} />
+            <AppStack.Screen name="HelpSupport" component={Helpsupportscreen} />
         </AppStack.Navigator>
     );
 };

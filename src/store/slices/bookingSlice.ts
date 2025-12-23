@@ -89,10 +89,32 @@ export const calculateFare = createAsyncThunk(
             console.log('✅ Fare calculated:', response.data);
             return response.data;
         } catch (error: any) {
-            console.error('❌ Calculate fare error:', error.response?.data);
-            return rejectWithValue(
-                error.response?.data?.message || 'Failed to calculate fare'
-            );
+            console.error('❌ Calculate fare error - Full error object:', error);
+            console.error('❌ Calculate fare error - Response status:', error.response?.status);
+            console.error('❌ Calculate fare error - Response data:', error.response?.data);
+            console.error('❌ Calculate fare error - Response data type:', typeof error.response?.data);
+
+            // Handle different error response formats
+            let errorMessage = 'Failed to calculate fare';
+
+            if (error.response?.data) {
+                const errorData = error.response.data;
+
+                // Check if errorData is an object with a message property
+                if (typeof errorData === 'object') {
+                    errorMessage = errorData.message ||
+                                 errorData.error ||
+                                 errorData.detail ||
+                                 errorData.error_message ||
+                                 JSON.stringify(errorData);
+                } else if (typeof errorData === 'string') {
+                    errorMessage = errorData;
+                }
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
+            return rejectWithValue(errorMessage);
         }
     }
 );
@@ -114,16 +136,63 @@ export const bookRide = createAsyncThunk(
     ) => {
         try {
             console.log('📦 BOOKING PAYLOAD BEING SENT:', JSON.stringify(payload, null, 2));
+
+            // Try to make the booking request
             const response = await client.post<BookingResponse>('/bookings/book', payload);
+
             console.log('✅ Ride booked - FULL RESPONSE:', JSON.stringify(response.data, null, 2));
             console.log('🔐 Start OTP:', response.data.startOtp);
             console.log('📋 Booking Status:', response.data.booking?.status);
             return response.data;
         } catch (error: any) {
-            console.error('❌ Book ride error:', error.response?.data);
-            return rejectWithValue(
-                error.response?.data?.message || 'Failed to book ride'
-            );
+            console.error('❌ Book ride error - Full error object:', error);
+            console.error('❌ Book ride error - Response status:', error.response?.status);
+            console.error('❌ Book ride error - Response data:', error.response?.data);
+            console.error('❌ Book ride error - Response data type:', typeof error.response?.data);
+
+            // Additional debugging for 400 errors
+            if (error.response?.status === 400) {
+                console.error('❌ 400 Bad Request Details:', {
+                    data: error.response?.data,
+                    message: error.response?.data?.message,
+                    error: error.response?.data?.error,
+                    validationErrors: error.response?.data?.errors || error.response?.data?.validation_errors,
+                    payloadStructure: {
+                        hasPickupLocation: !!payload.pickupLocation,
+                        hasDropoffLocation: !!payload.dropoffLocation,
+                        hasPaymentMethod: !!payload.paymentMethod,
+                        hasRideType: !!payload.rideType,
+                        pickupStructure: payload.pickupLocation,
+                        dropoffStructure: payload.dropoffLocation,
+                    }
+                });
+            }
+
+            // Handle different error response formats
+            let errorMessage = 'Failed to book ride';
+
+            // Check for authentication errors specifically
+            if (error.response?.status === 401) {
+                errorMessage = 'Authentication required. Please log in again.';
+            } else if (error.response?.data) {
+                const errorData = error.response.data;
+
+                // Check if errorData is an object with a message property
+                if (typeof errorData === 'object') {
+                    errorMessage = errorData.message ||
+                                 errorData.error ||
+                                 errorData.detail ||
+                                 errorData.error_message ||
+                                 errorData.success === false && errorData.message ||
+                                 JSON.stringify(errorData);
+                } else if (typeof errorData === 'string') {
+                    errorMessage = errorData;
+                }
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
+            return rejectWithValue(errorMessage);
         }
     }
 );
