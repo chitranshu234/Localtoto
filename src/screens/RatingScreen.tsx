@@ -38,7 +38,7 @@ const RatingScreen = () => {
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute<RoutePropType>();
     const dispatch = useAppDispatch();
-    const { isRating } = useAppSelector(state => state.ride);
+    const { isRating, driver, currentRide } = useAppSelector(state => state.ride);
 
     // Get rideId from route params
     const rideId = route.params?.rideId;
@@ -46,6 +46,16 @@ const RatingScreen = () => {
     const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
     const [comment, setComment] = useState('');
     const [tip, setTip] = useState<number | null>(null);
+
+    // Generate avatar initials from driver name
+    const getAvatarInitials = (name?: string) => {
+        if (!name) return 'DR';
+        const parts = name.split(' ');
+        if (parts.length >= 2) {
+            return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
+    };
 
     const commonIssues = [
         { id: 'route', icon: 'wrong-location', iconSet: 'MaterialCommunityIcons', label: 'Wrong route' },
@@ -223,12 +233,12 @@ const RatingScreen = () => {
                         <View style={styles.driverCard}>
                             <View style={styles.driverProfile}>
                                 <View style={styles.driverAvatar}>
-                                    <Text style={styles.avatarText}>RS</Text>
+                                    <Text style={styles.avatarText}>{getAvatarInitials(driver?.name)}</Text>
                                 </View>
                                 <View style={styles.driverDetails}>
-                                    <Text style={styles.driverName}>Ramesh Sharma</Text>
-                                    <Text style={styles.driverInfo}>Honda Activa • DL-01-AB-1234</Text>
-                                    <Text style={styles.tripInfo}>15 Oct, 3:30 PM • ₹45 paid</Text>
+                                    <Text style={styles.driverName}>{driver?.name || 'Driver'}</Text>
+                                    <Text style={styles.driverInfo}>{driver?.vehicle || 'Vehicle'}{driver?.vehicleNumber ? ` • ${driver.vehicleNumber}` : ''}</Text>
+                                    <Text style={styles.tripInfo}>{currentRide ? `₹${currentRide.fare} paid` : 'Fare not available'}</Text>
                                 </View>
                             </View>
                         </View>

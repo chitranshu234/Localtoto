@@ -16,6 +16,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Button from '../components/Button';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useAppSelector } from '../store/hooks';
 
 const { width, height } = Dimensions.get('window');
 
@@ -23,7 +24,7 @@ type RootStackParamList = {
     Onboarding: undefined;
     Location: undefined;
     RideStatus: undefined;
-    Rating: undefined;
+    Rating: { rideId?: number } | undefined;
     MainTabs: undefined;
 };
 
@@ -31,6 +32,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'RideStatus'
 
 const RideStatusScreen = () => {
     const navigation = useNavigation<NavigationProp>();
+    const { currentRide } = useAppSelector(state => state.ride);
     const [rideStatus, setRideStatus] = useState<'arriving' | 'in-progress' | 'arrived'>('arriving');
     const [timer, setTimer] = useState(120);
     const animatedValue = new Animated.Value(1);
@@ -266,7 +268,7 @@ const RideStatusScreen = () => {
                             {rideStatus === 'arrived' ? (
                                 <Button
                                     title="Rate Your Ride"
-                                    onPress={() => navigation.navigate('Rating')}
+                                    onPress={() => navigation.navigate('Rating', { rideId: currentRide?.id })}
                                     variant="primary"
                                     style={styles.completeButton}
                                 />
